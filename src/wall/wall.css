@@ -31,7 +31,9 @@
   --_shelf-top: var(--bw-shelf-top, color-mix(in oklab, var(--_canvas) 90%, var(--_fg)));
   --_shelf-edge: var(--bw-shelf-edge, color-mix(in oklab, var(--_shelf-top) 80%, var(--_fg)));
   --_shelf-front: var(--bw-shelf-front, color-mix(in oklab, var(--_canvas) 84%, var(--_fg)));
-  --_shelf-under: var(--bw-shelf-under, color-mix(in oklab, var(--_shelf-front) 55%, black));
+  /* Between the front and the wall: darker than the front, still off the
+     wall's colour so the shelf's edge reads against it. */
+  --_shelf-under: var(--bw-shelf-under, color-mix(in oklab, var(--_shelf-front) 55%, var(--_canvas)));
   --_shelf-shadow: var(--bw-shelf-shadow, rgb(0 0 0 / 0.5));
   --_tone-bone: var(--bw-tone-bone, #e2dbc6);
   --_tone-sage: var(--bw-tone-sage, #80a39b);
@@ -605,7 +607,7 @@ button {
   right: 0;
   top: 100%;
   height: var(--shelf-depth);
-  background: linear-gradient(var(--_shelf-under), color-mix(in oklab, var(--_shelf-under) 80%, black));
+  background: linear-gradient(var(--_shelf-under), color-mix(in oklab, var(--_shelf-under) 85%, black));
   transform-origin: 50% 0;
   transform: rotateX(-90deg);
   backface-visibility: hidden;
