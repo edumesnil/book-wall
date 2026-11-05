@@ -2,6 +2,8 @@
 
 Your Goodreads library as a wall of 3D books that never ends. Visitors pan along the shelves, take a book down, turn it over in their hands and read your notes on the back.
 
+See it live on [ericdumesnil.com/library](https://ericdumesnil.com/library/), the page book-wall came out of.
+
 There are two parts. A CLI reads your Goodreads export, writes a `books.json` and downloads a cover for each book, once, on your machine. A custom element, `<book-wall>`, draws the wall from those files. It has no framework and no runtime dependency, and it never calls a third-party service while someone browses.
 
 > book-wall isn't on npm yet. Until it is, build it from this repository (see [Development](#development)).
