@@ -1,8 +1,21 @@
 {
   "name": "book-wall",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "Your Goodreads library as an infinite wall of 3D books. A CLI to import and fetch covers, a custom element to render them.",
+  "keywords": [
+    "goodreads",
+    "books",
+    "library",
+    "bookshelf",
+    "3d",
+    "custom-element",
+    "web-component",
+    "reading"
+  ],
+  "homepage": "https://github.com/edumesnil/book-wall#readme",
+  "bugs": {
+    "url": "https://github.com/edumesnil/book-wall/issues"
+  },
   "license": "MIT",
   "author": "Eric Dumesnil",
   "repository": {
@@ -13,6 +26,17 @@
   "bin": {
     "book-wall": "./dist/cli/index.js"
   },
+  "main": "./dist/book-wall.js",
+  "types": "./dist/types/wall/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/wall/index.d.ts",
+      "default": "./dist/book-wall.js"
+    },
+    "./book-wall.iife.js": "./dist/book-wall.iife.js",
+    "./schema/books.v1.json": "./schema/books.v1.json",
+    "./package.json": "./package.json"
+  },
   "files": [
     "dist",
     "schema"
@@ -22,13 +46,15 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "npm run build:cli && npm run build:wall",
+    "build": "npm run build:cli && npm run build:wall && npm run build:types",
     "build:cli": "tsc -p tsconfig.build.json",
     "build:wall": "vite build -c vite.lib.config.ts",
     "build:demo": "vite build",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.wall.json",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "build:types": "tsc -p tsconfig.types.json",
+    "prepublishOnly": "npm test && npm run build"
   },
   "dependencies": {
     "sharp": "^0.35.5"
@@ -40,10 +66,5 @@
     "typescript": "^7.0.2",
     "vite": "^8.3.6",
     "vitest": "^5.1.0"
-  },
-  "exports": {
-    ".": "./dist/book-wall.js",
-    "./package.json": "./package.json"
-  },
-  "main": "./dist/book-wall.js"
+  }
 }

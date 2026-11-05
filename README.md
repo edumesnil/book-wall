@@ -6,8 +6,6 @@ See it live on [ericdumesnil.com/library](https://ericdumesnil.com/library/), th
 
 There are two parts. A CLI reads your Goodreads export, writes a `books.json` and downloads a cover for each book, once, on your machine. A custom element, `<book-wall>`, draws the wall from those files. It has no framework and no runtime dependency, and it never calls a third-party service while someone browses.
 
-> book-wall isn't on npm yet. Until it is, build it from this repository (see [Development](#development)).
-
 ## Quick start
 
 **1. Export your library from Goodreads.** Go to My Books, then Import and export, then Export library. Goodreads gives you `goodreads_library_export.csv`.
@@ -31,7 +29,7 @@ The first command writes `public/books.json`. The second downloads the covers in
 <book-wall src="/books.json" covers="/covers/" heading="Library"></book-wall>
 ```
 
-On a page without a bundler, load `dist/book-wall.iife.js` with a regular `<script>` tag instead. The element is 100svh tall by default. For a wall that fills the page, add this CSS.
+Install it with `npm install book-wall`. On a page without a bundler, load the file `book-wall.iife.js` from the package with a regular `<script>` tag instead. The element is 100svh tall by default. For a wall that fills the page, add this CSS.
 
 ```css
 html,
