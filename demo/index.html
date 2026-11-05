@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>book-wall: your reading as a wall of 3D books</title>
+    <meta
+      name="description"
+      content="A Goodreads export rendered as an infinite wall of 3D books you can pan, open, turn and flip. A CLI and a custom element."
+    />
+    <link rel="preload" href="./fonts/InstrumentSerif-Regular.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="./fonts/IBMPlexMono-Regular.woff2" as="font" type="font/woff2" crossorigin />
+    <style>
+      /* Self-hosted, SIL OFL (licences beside the files). */
+      @font-face {
+        font-family: "Instrument Serif";
+        src: url("./fonts/InstrumentSerif-Regular.woff2") format("woff2");
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "IBM Plex Mono";
+        src: url("./fonts/IBMPlexMono-Regular.woff2") format("woff2");
+        font-display: swap;
+      }
+      /* The theme is set on the page, not the element: the --bw-* properties
+         inherit like any other. */
+      :root {
+        --bw-canvas: #15140f;
+        --bw-fg: #ece6da;
+        --bw-accent: #c2a878;
+        --bw-font-display: "Instrument Serif", ui-serif, Georgia, serif;
+        --bw-font-body: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+        /* Instrument Serif has a single weight: no faux bold. */
+        --bw-display-weight: 400;
+        --bw-rating-shape: star;
+        --demo-ui: color-mix(in srgb, var(--bw-fg) 55%, transparent);
+      }
+      :root[data-theme="light"] {
+        --bw-canvas: #f4efe4;
+        --bw-fg: #201d17;
+        --bw-accent: #7a5f2e;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: var(--bw-canvas);
+        /* The wall pans on horizontal swipes; without this Chrome reads them
+           as back / forward navigation. */
+        overscroll-behavior: none;
+      }
+      book-wall {
+        position: fixed;
+        inset: 0;
+        height: auto;
+      }
+      /* On the footer's baseline, opposite the hint. Hidden while a book is
+         open: the reader has its own chrome. */
+      .demo-bar {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 1;
+        display: flex;
+        gap: 20px;
+        font: 12px/1 var(--bw-font-body);
+        transition: opacity 300ms cubic-bezier(0.23, 1, 0.32, 1);
+      }
+      .demo-bar[data-hidden] {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .demo-bar a,
+      .demo-bar button {
+        font: inherit;
+        color: var(--bw-accent);
+        background: none;
+        border: 0;
+        padding: 0;
+        cursor: pointer;
+        text-decoration: none;
+        transition: color 150ms;
+      }
+      .demo-bar a:hover,
+      .demo-bar button:hover {
+        color: var(--bw-fg);
+      }
+      .demo-bar span {
+        color: var(--demo-ui);
+      }
+      @media (min-width: 768px) {
+        .demo-bar {
+          bottom: 32px;
+          right: 40px;
+        }
+      }
+    </style>
+    <script type="module" src="./main.ts"></script>
+  </head>
+  <body>
+    <book-wall src="./books.json" covers="./covers/" heading="Library"></book-wall>
+    <nav class="demo-bar" aria-label="Demo">
+      <button type="button" data-toggle="lang">Français</button>
+      <button type="button" data-toggle="theme">Light</button>
+      <a href="https://github.com/edumesnil/book-wall">GitHub ↗</a>
+    </nav>
+  </body>
+</html>

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.context/
+*.log
+.DS_Store
+demo/public/local/
+dist-demo/
+demo/art/
+demo/.cache/

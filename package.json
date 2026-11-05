@@ -1,0 +1,49 @@
+{
+  "name": "book-wall",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Your Goodreads library as an infinite wall of 3D books. A CLI to import and fetch covers, a custom element to render them.",
+  "license": "MIT",
+  "author": "Eric Dumesnil",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/edumesnil/book-wall.git"
+  },
+  "type": "module",
+  "bin": {
+    "book-wall": "./dist/cli/index.js"
+  },
+  "files": [
+    "dist",
+    "schema"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run build:cli && npm run build:wall",
+    "build:cli": "tsc -p tsconfig.build.json",
+    "build:wall": "vite build -c vite.lib.config.ts",
+    "build:demo": "vite build",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.wall.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "sharp": "^0.35.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "ajv": "^8.20.0",
+    "fontkit": "^2.0.4",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0"
+  },
+  "exports": {
+    ".": "./dist/book-wall.js",
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/book-wall.js"
+}

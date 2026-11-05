@@ -1,0 +1,122 @@
+{
+  "war-and-peace": {
+    "w": 1400,
+    "h": 2100,
+    "source": "manual",
+    "tint": "#735126",
+    "spine": "#928c80",
+    "backInk": "light"
+  },
+  "twenty-thousand-leagues-under-the-seas": {
+    "w": 1400,
+    "h": 2100,
+    "source": "manual",
+    "tint": "#cfa230",
+    "spine": "#d0cdbf",
+    "backInk": "dark"
+  },
+  "moby-dick": {
+    "w": 1400,
+    "h": 2100,
+    "source": "manual",
+    "tint": "#bfa140",
+    "spine": "#bdb7a0",
+    "backInk": "dark"
+  },
+  "frankenstein": {
+    "w": 1400,
+    "h": 2100,
+    "source": "manual",
+    "tint": "#734826",
+    "spine": "#706861",
+    "backInk": "light"
+  },
+  "dracula": {
+    "w": 1400,
+    "h": 2100,
+    "source": "manual",
+    "tint": "#734a26",
+    "spine": "#72675f",
+    "backInk": "light"
+  },
+  "wuthering-heights": {
+    "w": 1400,
+    "h": 2100,
+    "source": "manual",
+    "tint": "#657326",
+    "spine": "#9fb19f",
+    "backInk": "dark"
+  },
+  "the-awakening": {
+    "w": 1400,
+    "h": 2100,
+    "source": "manual",
+    "tint": "#318e92",
+    "spine": "#8c9b97",
+    "backInk": "dark"
+  },
+  "vanity-fair": {
+    "w": 1400,
+    "h": 2100,
+    "source": "manual",
+    "tint": "#734b26",
+    "spine": "#8d7c6e",
+    "backInk": "light"
+  },
+  "the-portrait-of-a-lady": {
+    "w": 1400,
+    "h": 2100,
+    "source": "manual",
+    "tint": "#734e26",
+    "spine": "#908270",
+    "backInk": "light"
+  },
+  "madame-bovary": {
+    "w": 1400,
+    "h": 2100,
+    "source": "manual",
+    "tint": "#734f26",
+    "spine": "#8e8876",
+    "backInk": "light"
+  },
+  "the-phantom-of-the-opera": {
+    "w": 1400,
+    "h": 2100,
+    "source": "manual",
+    "tint": "#735126",
+    "spine": "#7f7c70",
+    "backInk": "light"
+  },
+  "the-lost-world": {
+    "w": 1400,
+    "h": 2100,
+    "source": "manual",
+    "tint": "#796120",
+    "spine": "#a29c88",
+    "backInk": "dark"
+  },
+  "the-iliad": {
+    "w": 1400,
+    "h": 2100,
+    "source": "manual",
+    "tint": "#756d62",
+    "spine": "#a49e96",
+    "backInk": "dark"
+  },
+  "the-republic": {
+    "w": 1400,
+    "h": 2100,
+    "source": "manual",
+    "tint": "#734a26",
+    "spine": "#6c6760",
+    "backInk": "light"
+  },
+  "little-women": {
+    "w": 1400,
+    "h": 2100,
+    "source": "manual",
+    "tint": "#be990f",
+    "spine": "#dec257",
+    "backInk": "dark"
+  }
+}

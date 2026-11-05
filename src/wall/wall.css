@@ -1,0 +1,1135 @@
+/* <book-wall>. Everything here lives in the element's shadow root.
+
+   Theming: set these on the element or on any ancestor; each one is read
+   through an internal --_name with the default as fallback, so an ancestor's
+   value is inherited. For a light-theme-only value, scope it:
+   book-wall[data-theme="light"] { --bw-canvas: … }.
+     --bw-canvas --bw-fg --bw-accent           the page's three colours
+     --bw-font-display --bw-font-body          title / covers, and everything else
+     --bw-font-display-settings                font-variation-settings for the display face
+     --bw-display-weight                       one weight for every display text (a face
+                                               with a single weight), default 600–900
+     --bw-shelf-top --bw-shelf-edge --bw-shelf-front --bw-shelf-under
+     --bw-shelf-shadow
+     --bw-tone-<name> --bw-ink-dark --bw-ink-light --bw-paper --bw-paper-line
+     --bw-rating-shape                         the rating marks: star, or a mask image
+                                               (url(…) of an SVG); squares if unset
+     --bw-ease-out --bw-ease-in-out            the two motion curves
+   Parts, for ::part(): wall, header, heading, footer, reader, rating, rating-box.
+   Book tones are physical objects: they stay the same in both themes; the
+   wall, the shelves and their shadows follow it. */
+
+:host {
+  --_canvas: var(--bw-canvas, #1c1c1c);
+  --_fg: var(--bw-fg, #e8e6e3);
+  --_accent: var(--bw-accent, #a8a29e);
+  --_font-display: var(--bw-font-display, ui-serif, "Iowan Old Style", "Palatino Linotype", Georgia, serif);
+  --_font-body: var(--bw-font-body, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+  --_font-display-settings: var(--bw-font-display-settings, normal);
+  /* A shelf lit from above: the top catches the light and brightens toward
+     its front edge, the front face is in shade, and it casts a shadow below. */
+  --_shelf-top: var(--bw-shelf-top, color-mix(in oklab, var(--_canvas) 90%, var(--_fg)));
+  --_shelf-edge: var(--bw-shelf-edge, color-mix(in oklab, var(--_shelf-top) 80%, var(--_fg)));
+  --_shelf-front: var(--bw-shelf-front, color-mix(in oklab, var(--_canvas) 84%, var(--_fg)));
+  --_shelf-under: var(--bw-shelf-under, color-mix(in oklab, var(--_shelf-front) 55%, black));
+  --_shelf-shadow: var(--bw-shelf-shadow, rgb(0 0 0 / 0.5));
+  --_tone-bone: var(--bw-tone-bone, #e2dbc6);
+  --_tone-sage: var(--bw-tone-sage, #80a39b);
+  --_tone-mist: var(--bw-tone-mist, #b3bfb9);
+  --_tone-ochre: var(--bw-tone-ochre, #c39a44);
+  --_tone-moss: var(--bw-tone-moss, #34463c);
+  --_tone-clay: var(--bw-tone-clay, #9a5038);
+  --_tone-ink: var(--bw-tone-ink, #22292e);
+  --_tone-oxblood: var(--bw-tone-oxblood, #5e2a2c);
+  --_tone-slate: var(--bw-tone-slate, #53606c);
+  --_ink-dark: var(--bw-ink-dark, #1b201c);
+  --_ink-light: var(--bw-ink-light, #efeadb);
+  --_paper: var(--bw-paper, #ebe5d3);
+  --_paper-line: var(--bw-paper-line, #cfc6ae);
+  --_ease-out: var(--bw-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+  --_ease-in-out: var(--bw-ease-in-out, cubic-bezier(0.77, 0, 0.175, 1));
+  display: block;
+  position: relative;
+  height: 100svh;
+  overflow: hidden;
+  container-type: size;
+  background: var(--_canvas);
+  color: var(--_fg);
+  font-family: var(--_font-body);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+:host([data-theme="light"]) {
+  --_canvas: var(--bw-canvas, #f5f4f1);
+  --_fg: var(--bw-fg, #1c1c1c);
+  --_accent: var(--bw-accent, #57534e);
+  /* On a light wall the lit top is brighter than the wall itself. */
+  --_shelf-top: var(--bw-shelf-top, color-mix(in oklab, var(--_canvas) 45%, white));
+  --_shelf-edge: var(--bw-shelf-edge, white);
+  --_shelf-front: var(--bw-shelf-front, color-mix(in oklab, var(--_canvas) 85%, var(--_fg)));
+  --_shelf-under: var(--bw-shelf-under, color-mix(in oklab, var(--_shelf-front) 75%, var(--_fg)));
+  --_shelf-shadow: var(--bw-shelf-shadow, color-mix(in srgb, var(--_fg) 30%, transparent));
+}
+:host([hidden]) {
+  display: none;
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.bw-display {
+  font-family: var(--_font-display);
+  font-variation-settings: var(--_font-display-settings);
+}
+.bw-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ───────── the box ─────────
+   Every face is a flat div placed in space inside a preserve-3d container;
+   backface-visibility hides the faces turned away. `--w` (cover width), `--ar`
+   (height ÷ width) and `--t` (depth ÷ width) size it; the binding adds
+   `--board` / `--square` and the `--edge` / `--endpaper` colours.
+
+   The wall model: cover, spine, fore-edge. The board edges are painted on the
+   fore-edge as two stripes rather than built, to keep the planes few. */
+.book {
+  --d: calc(var(--w) * var(--t, 0.1));
+  --h: calc(var(--w) * var(--ar, 1.5));
+  --b: calc(var(--w) * var(--board, 0.007));
+  --sq: calc(var(--w) * var(--square, 0));
+  position: relative;
+  width: var(--w);
+  height: var(--h);
+  transform-style: preserve-3d;
+}
+.book-face {
+  position: absolute;
+  backface-visibility: hidden;
+}
+.book-front,
+.book-back {
+  inset: 0;
+}
+.book-front {
+  transform: translateZ(calc(var(--d) / 2));
+}
+.book-back {
+  transform: rotateY(180deg) translateZ(calc(var(--d) / 2));
+  overflow: hidden;
+}
+.book-spine,
+.book-pages {
+  top: 0;
+  height: 100%;
+  width: var(--d);
+  left: calc(50% - var(--d) / 2);
+}
+.book-spine {
+  transform: rotateY(-90deg) translateZ(calc(var(--w) / 2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.book-pages {
+  transform: rotateY(90deg) translateZ(calc(var(--w) / 2 - 1px));
+  background:
+    linear-gradient(
+      90deg,
+      var(--edge) 0 var(--b),
+      transparent var(--b) calc(100% - var(--b)),
+      var(--edge) calc(100% - var(--b))
+    ),
+    repeating-linear-gradient(90deg, var(--_paper) 0 1.5px, var(--_paper-line) 1.5px 2px);
+}
+.bw-spine-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  writing-mode: vertical-rl;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.8;
+  font-size: calc(var(--w) * 0.045);
+  max-height: 86%;
+}
+
+/* The reader's model: a real book. Faces are centred on the box's centre
+   (left/top 50% minus half their size) and moved out with translate3d, so
+   each transform below reads as "where it is, which way it faces": x right,
+   y down, z toward the viewer; the boards sit at z = ±(d/2 − b/2). */
+.book-solid > .s-inner-front,
+.book-solid > .s-inner-back {
+  inset: 0;
+  background: var(--endpaper);
+}
+.book-solid > .s-inner-front {
+  transform: translateZ(calc(var(--d) / 2 - var(--b))) rotateY(180deg);
+}
+.book-solid > .s-inner-back {
+  transform: translateZ(calc(var(--b) - var(--d) / 2));
+}
+.book-solid > .s-edge {
+  background: var(--edge);
+}
+.book-solid > .s-at-front {
+  --z: calc(var(--d) / 2 - var(--b) / 2);
+}
+.book-solid > .s-at-back {
+  --z: calc(var(--b) / 2 - var(--d) / 2);
+}
+.book-solid > .s-fore {
+  width: var(--b);
+  height: var(--h);
+  left: calc(50% - var(--b) / 2);
+  top: 0;
+  transform: translate3d(calc(var(--w) / 2), 0, var(--z)) rotateY(90deg);
+}
+.book-solid > .s-head,
+.book-solid > .s-tail {
+  width: var(--w);
+  height: var(--b);
+  left: 0;
+  top: calc(50% - var(--b) / 2);
+}
+.book-solid > .s-head {
+  transform: translate3d(0, calc(var(--h) / -2), var(--z)) rotateX(90deg);
+}
+.book-solid > .s-tail {
+  transform: translate3d(0, calc(var(--h) / 2), var(--z)) rotateX(-90deg);
+}
+/* The spine's own cut ends: without them the pages run into the corner and,
+   seen from above or below, the spine seems to vanish. */
+.book-solid > .s-spine-head,
+.book-solid > .s-spine-tail {
+  width: var(--b);
+  height: var(--d);
+  left: 0;
+  top: calc(50% - var(--d) / 2);
+  background: var(--edge);
+}
+.book-solid > .s-spine-head {
+  transform: translate3d(0, calc(var(--h) / -2), 0) rotateX(90deg);
+}
+.book-solid > .s-spine-tail {
+  transform: translate3d(0, calc(var(--h) / 2), 0) rotateX(-90deg);
+}
+.book-solid > .s-pages-fore {
+  width: calc(var(--d) - 2 * var(--b));
+  height: calc(var(--h) - 2 * var(--sq));
+  left: calc(50% - (var(--d) - 2 * var(--b)) / 2);
+  top: var(--sq);
+  transform: translateX(calc(var(--w) / 2 - var(--sq))) rotateY(90deg);
+  background: repeating-linear-gradient(90deg, var(--_paper) 0 1.5px, var(--_paper-line) 1.5px 2px);
+}
+.book-solid > .s-pages-head,
+.book-solid > .s-pages-tail {
+  /* From inside the spine's thickness to the square at the fore-edge. */
+  width: calc(var(--w) - var(--sq) - var(--b));
+  height: calc(var(--d) - 2 * var(--b));
+  left: var(--b);
+  top: calc(50% - (var(--d) - 2 * var(--b)) / 2);
+  background: repeating-linear-gradient(0deg, var(--_paper) 0 1.5px, var(--_paper-line) 1.5px 2px);
+}
+.book-solid > .s-pages-head {
+  transform: translate3d(0, calc(var(--sq) - var(--h) / 2), 0) rotateX(90deg);
+}
+.book-solid > .s-pages-tail {
+  transform: translate3d(0, calc(var(--h) / 2 - var(--sq)), 0) rotateX(-90deg);
+}
+
+/* ───────── covers ───────── */
+.bw-cover {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-size: calc(var(--w) * 0.1);
+}
+.bw-cover-img,
+.bw-back-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.bw-back-img {
+  max-width: none;
+  transform: scaleX(-1);
+}
+.bw-back-tint {
+  position: absolute;
+  inset: 0;
+}
+.bw-hinge {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2.5%;
+  left: 5%;
+  background: linear-gradient(to right, rgb(0 0 0 / 0.25), rgb(255 255 255 / 0.1), transparent);
+}
+.bw-hinge-back {
+  left: auto;
+  right: 5%;
+  background: linear-gradient(to left, rgb(0 0 0 / 0.25), rgb(255 255 255 / 0.1), transparent);
+}
+.bw-rake {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgb(255 255 255 / 0.12), transparent 45%, rgb(0 0 0 / 0.2));
+}
+
+/* The typographic cover, for a book without a fetched one. */
+.bw-art {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  /* Inset a little more on the hinge side, like a real cover. */
+  padding: 0.9em 0.8em 0.9em 1.15em;
+}
+.bw-art-classic {
+  justify-content: space-between;
+}
+.bw-art-title {
+  display: block;
+  font-family: var(--_font-display);
+  font-variation-settings: var(--_font-display-settings);
+  line-height: 0.98;
+  font-weight: var(--bw-display-weight, 700);
+  letter-spacing: -0.01em;
+}
+.bw-art-author {
+  display: block;
+  font-family: var(--_font-body);
+  font-size: 0.38em;
+  line-height: 1.3;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+.bw-art-series {
+  display: block;
+  font-family: var(--_font-body);
+  font-size: 0.34em;
+  line-height: 1.3;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+.bw-art-rule {
+  margin-bottom: 0.6em;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.35;
+}
+.bw-art-classic-tag {
+  display: block;
+  margin-bottom: 0.6em;
+}
+.bw-art-band-tag {
+  margin-top: 0.4em;
+}
+.bw-art-checker {
+  margin: 0.7em 0;
+  flex: 1;
+  opacity: 0.16;
+  background-image: repeating-conic-gradient(currentColor 0 25%, transparent 0 50%);
+  background-size: 0.9em 0.9em;
+}
+.bw-art-frame {
+  position: absolute;
+  inset: 0.75em 0.75em 0.75em 1em;
+}
+.bw-art-frame-line {
+  position: absolute;
+  inset: 0;
+  border: 1px solid currentColor;
+  opacity: 0.35;
+}
+.bw-art-corner {
+  position: absolute;
+  width: 0.34em;
+  height: 0.34em;
+  border: 1px solid currentColor;
+}
+.bw-art-frame-body {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.55em;
+  text-align: center;
+}
+.bw-art-frame-tag {
+  margin-bottom: 0.9em;
+}
+.bw-art-frame-author {
+  margin-top: 1em;
+}
+.bw-tl { top: 0; left: 0; translate: -50% -50%; }
+.bw-tc { top: 0; left: 50%; translate: -50% -50%; }
+.bw-tr { top: 0; right: 0; translate: 50% -50%; }
+.bw-mr { top: 50%; right: 0; translate: 50% -50%; }
+.bw-br { bottom: 0; right: 0; translate: 50% 50%; }
+.bw-bc { bottom: 0; left: 50%; translate: -50% 50%; }
+.bw-bl { bottom: 0; left: 0; translate: -50% 50%; }
+.bw-ml { top: 50%; left: 0; translate: -50% -50%; }
+
+/* Satin sheen: a soft band of light across the cover, on a layer twice the
+   cover's size (clipped by it) so it can slide. On the wall it is CSS only:
+   the band sweeps across as a book stands up on hover, and never costs a
+   frame of a pan. In the reader the book drives it from its real orientation
+   (--sx/--sy for the cover, --bx/--by for the back). */
+.lib-sheen {
+  position: absolute;
+  inset: -50%;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 34%,
+    rgb(255 255 255 / 0.06) 42%,
+    rgb(255 255 255 / 0.24) 48%,
+    rgb(255 255 255 / 0.08) 53%,
+    transparent 62%
+  );
+  transform: translate3d(-16%, -10%, 0);
+  transition: transform 700ms var(--_ease-out);
+}
+.lib-slot:focus-visible .lib-sheen {
+  transform: translate3d(12%, 7%, 0);
+}
+.book-solid .lib-sheen {
+  transition: none;
+  transform: translate3d(var(--sx, -16%), var(--sy, -10%), 0);
+}
+.book-solid .lib-sheen-back {
+  transform: translate3d(var(--bx, -16%), var(--by, -10%), 0);
+}
+
+/* The back cover's text. */
+.bw-back-body {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 1.6em 1.9em 1.6em 1.6em;
+  text-align: left;
+  font-family: var(--_font-body);
+  font-size: calc(var(--w) * 0.04);
+}
+.bw-back-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.85em;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+.bw-back-head > :last-child {
+  flex-shrink: 0;
+}
+.bw-back-rule {
+  margin: 1.2em 0;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.25;
+}
+.bw-back-series {
+  margin: 0 0 0.8em;
+  font-size: 0.85em;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+.bw-back-quote {
+  margin: 0 0 1em;
+  font-family: var(--_font-display);
+  font-variation-settings: var(--_font-display-settings);
+  font-size: 1.55em;
+  line-height: 1.2;
+  font-weight: var(--bw-display-weight, 600);
+}
+.bw-back-note {
+  margin: 0;
+  line-height: 1.65;
+}
+.bw-back-foot {
+  margin-top: auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.bw-back-author {
+  margin: 0.8em 0 0;
+  font-size: 0.8em;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+.bw-rating {
+  display: inline-flex;
+  gap: 0.4em;
+}
+.bw-rating-box {
+  position: relative;
+  display: block;
+  width: 0.6em;
+  height: 0.6em;
+  border: 1px solid currentColor;
+}
+.bw-rating-box > span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background: currentColor;
+}
+/* With --bw-rating-shape set: each mark is that shape, a faint empty one
+   filled from the left, so fractions (4.5) still read. */
+.bw-rating-shaped {
+  gap: 0.2em;
+}
+.bw-rating-shaped .bw-rating-box {
+  width: 0.85em;
+  height: 0.85em;
+  border: 0;
+  background: color-mix(in srgb, currentColor 25%, transparent);
+  /* Set inline from --bw-rating-shape ("star" is mapped to a built-in SVG). */
+  -webkit-mask: var(--_rating-mask) center / contain no-repeat;
+  mask: var(--_rating-mask) center / contain no-repeat;
+}
+.bw-barcode {
+  display: block;
+  background: var(--_paper);
+  padding: 0.45em 0.5em 0.2em;
+  color: var(--_ink-dark);
+}
+.bw-barcode-bars {
+  display: block;
+  height: 2.6em;
+  width: 7.2em;
+}
+.bw-barcode-digits {
+  margin-top: 0.15em;
+  display: block;
+  text-align: center;
+  font-size: 0.62em;
+  letter-spacing: 0.18em;
+}
+
+.lib-3d {
+  transform-style: preserve-3d;
+}
+
+/* ───────── the wall ─────────
+   One camera for the whole canvas (perspective on the viewport), so a book
+   left of centre shows its fore-edge and one to the right its spine, and
+   panning is real parallax rather than a sliding picture. */
+.bw-viewport {
+  position: absolute;
+  inset: 0;
+  overflow: scroll;
+  overscroll-behavior: none;
+  scrollbar-width: none;
+  perspective: 1500px;
+  perspective-origin: 50% 42%;
+}
+.bw-viewport::-webkit-scrollbar {
+  display: none;
+}
+.bw-space {
+  position: relative;
+}
+.lib-world {
+  position: absolute;
+  --shelf-depth: calc(var(--w) * 0.42);
+  transform-style: preserve-3d;
+  /* The wall scrolls under one perspective, so every rotated face changes
+     its projected scale as it crosses the screen, and Chrome would re-raster
+     each one to match. will-change pins the raster scale for the subtree. */
+  will-change: transform;
+}
+[data-dragging] .lib-world {
+  pointer-events: none;
+}
+.lib-ledge {
+  position: absolute;
+  height: 16px;
+  background: var(--_shelf-front);
+  transform: translateZ(var(--shelf-depth));
+  transform-style: preserve-3d;
+}
+.lib-ledge::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: var(--shelf-depth);
+  background: linear-gradient(var(--_shelf-top), var(--_shelf-edge));
+  transform-origin: 50% 100%;
+  transform: rotateX(90deg);
+}
+/* The underside, in shade: seen on shelves above eye level, culled below it
+   (it faces down). Without it the wall shows through between the front
+   edge and the shadow. */
+.lib-ledge::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: var(--shelf-depth);
+  background: linear-gradient(var(--_shelf-under), color-mix(in oklab, var(--_shelf-under) 80%, black));
+  transform-origin: 50% 0;
+  transform: rotateX(-90deg);
+  backface-visibility: hidden;
+}
+/* Shadows are drawn soft rather than blurred: a `filter` per book, in one 3D
+   context of a few hundred planes, is what made panning stutter. */
+.lib-ledge-cast {
+  position: absolute;
+  height: 40px;
+  background: linear-gradient(var(--_shelf-shadow), transparent 85%);
+}
+.bw-cell {
+  position: absolute;
+}
+.bw-stand {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+.lib-slot {
+  position: relative;
+  display: block;
+  cursor: pointer;
+  outline: none;
+}
+.lib-slot.bw-hidden {
+  visibility: hidden;
+}
+
+/* A book on the shelf: stood toward the front of the ledge, leaning back
+   against the wall from its tail. Hover or keyboard focus stands it up and
+   brings it forward. */
+.lib-lean {
+  display: block;
+  transform-origin: 50% 100%;
+  transform: translateZ(calc(var(--w) * 0.2)) rotateX(var(--lean, 5deg));
+  transition: transform 280ms var(--_ease-out);
+}
+.lib-slot:focus-visible .lib-lean {
+  transform: translateZ(calc(var(--w) * 0.34)) translateY(-6%) rotateX(0deg);
+}
+/* Its shadow on the wall behind, which is what sells the lean. Flat on the
+   wall, no transform: with one it would be another plane in the 3D context. */
+.lib-cast {
+  position: absolute;
+  left: -2%;
+  right: -14%;
+  bottom: -2%;
+  height: 104%;
+  background: radial-gradient(closest-side, var(--_shelf-shadow) 55%, transparent);
+  transition: opacity 280ms var(--_ease-out);
+}
+.lib-slot:focus-visible .lib-cast {
+  opacity: 0.6;
+}
+
+/* Drawn on the cover face itself, so they cost no extra 3D plane. */
+.bw-overlay {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+}
+.bw-focus {
+  position: absolute;
+  inset: 0;
+  border: 1px solid color-mix(in srgb, var(--_accent) 70%, transparent);
+  opacity: 0;
+  transition: opacity 200ms;
+}
+.bw-handle {
+  position: absolute;
+  display: block;
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--_accent);
+  background: var(--_canvas);
+}
+.lib-slot:focus-visible .bw-focus {
+  opacity: 1;
+}
+.bw-open-tag {
+  position: absolute;
+  bottom: 7%;
+  left: 50%;
+  translate: -50% 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--_canvas) 90%, transparent);
+  padding: 4px 10px;
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  color: var(--_fg);
+  text-transform: uppercase;
+  opacity: 0;
+  transition:
+    opacity 300ms var(--_ease-out),
+    translate 300ms var(--_ease-out);
+}
+.lib-slot:focus-visible .bw-open-tag {
+  opacity: 1;
+  translate: -50% 0;
+}
+/* Real hover only: on touch a tap leaves :hover stuck after the reader closes. */
+@media (hover: hover) and (pointer: fine) {
+  .lib-slot:hover .lib-lean {
+    transform: translateZ(calc(var(--w) * 0.34)) translateY(-6%) rotateX(0deg);
+  }
+  .lib-slot:hover .lib-cast {
+    opacity: 0.6;
+  }
+  .lib-slot:hover .lib-sheen {
+    transform: translate3d(12%, 7%, 0);
+  }
+  .lib-slot:hover .bw-open-tag {
+    opacity: 1;
+    translate: -50% 0;
+  }
+}
+/* Printed on the shelf's front edge, like a library shelf label. */
+.bw-shelf-label {
+  position: absolute;
+  display: flex;
+  height: 16px;
+  align-items: center;
+  gap: 8px;
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  color: color-mix(in srgb, var(--_fg) 55%, transparent);
+  text-transform: uppercase;
+  transform: translateZ(calc(var(--shelf-depth) + 1px));
+}
+.bw-shelf-label-rule {
+  height: 1px;
+  width: 12px;
+  background: color-mix(in srgb, var(--_fg) 40%, transparent);
+}
+
+/* ───────── chrome ───────── */
+/* The wall fades into the canvas at the edges, so it reads as going on past
+   them, and the chrome sits on clean ground. */
+.bw-fades {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+}
+.bw-fades > span {
+  position: absolute;
+}
+.bw-fade-t {
+  inset: 0 0 auto;
+  height: 150px;
+  background: linear-gradient(to bottom, var(--_canvas) 25%, transparent);
+}
+.bw-fade-b {
+  inset: auto 0 0;
+  height: 150px;
+  background: linear-gradient(to top, var(--_canvas) 20%, transparent);
+}
+.bw-fade-l {
+  inset: 0 auto 0 0;
+  width: 10cqw;
+  background: linear-gradient(to right, color-mix(in srgb, var(--_canvas) 80%, transparent), transparent);
+}
+.bw-fade-r {
+  inset: 0 0 0 auto;
+  width: 10cqw;
+  background: linear-gradient(to left, color-mix(in srgb, var(--_canvas) 80%, transparent), transparent);
+}
+.bw-header {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 32px 24px 0;
+}
+.bw-foot {
+  pointer-events: none;
+  position: absolute;
+  inset: auto 0 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0 24px 24px;
+  font-size: 12px;
+}
+.bw-hint {
+  display: none;
+  color: color-mix(in srgb, var(--_fg) 40%, transparent);
+}
+.bw-caption {
+  margin: 0;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  color: color-mix(in srgb, var(--_fg) 70%, transparent);
+  opacity: 0;
+  transition: opacity 300ms var(--_ease-out);
+}
+.bw-foot-end {
+  /* Balances the hint so the caption stays centred. */
+  display: none;
+}
+@container (min-width: 640px) {
+  .bw-hint,
+  .bw-foot-end {
+    display: block;
+    flex: 0 0 28ch;
+    white-space: nowrap;
+  }
+}
+@container (min-width: 768px) {
+  .bw-header {
+    padding: 40px 40px 0;
+  }
+  .bw-foot {
+    padding: 0 40px 32px;
+  }
+}
+.bw-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--_fg) 55%, transparent);
+}
+
+/* The title as frosted glass, iOS-style: the wall behind it, heavily blurred,
+   seen through milky letterforms. backdrop-filter can't be clipped to live
+   text directly, so the blur sits on a box cut by an SVG clipPath holding the
+   same text, in the page's own font. The line box is tall enough for a
+   descender, or the clip cuts it. A blurred copy underneath is the drop
+   shadow (a box-shadow would be clipped). */
+.bw-title {
+  position: relative;
+  display: block;
+  width: max-content;
+  margin: 0;
+  font-family: var(--_font-display);
+  font-variation-settings: var(--_font-display-settings);
+  font-size: clamp(40px, 6cqw, 76px);
+  line-height: 1.3;
+  font-weight: var(--bw-display-weight, 900);
+}
+.bw-title-size {
+  visibility: hidden;
+}
+.bw-title svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.bw-title text {
+  font: inherit;
+  font-variation-settings: inherit;
+}
+.bw-title-shadow {
+  fill: rgb(0 0 0 / 0.45);
+  filter: blur(7px);
+}
+.bw-title-glass {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgb(255 255 255 / 0.45), rgb(255 255 255 / 0.28), rgb(255 255 255 / 0.18));
+  backdrop-filter: blur(40px) saturate(2) brightness(1.08);
+}
+
+/* ───────── the reader ───────── */
+.bw-reader {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+}
+.bw-reader-scroll {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: none;
+}
+.bw-backdrop {
+  /* Stays put while the reader scrolls (a short viewport), and stays inside
+     the scroller so a wheel over it still scrolls the reader. */
+  position: sticky;
+  top: 0;
+  display: block;
+  height: 100cqh;
+  /* The blur itself grows, with the tint: fading a full-strength blur in by
+     opacity reads as a blurred copy crossfading over the wall. Timed with the
+     book's flight (480ms in, 420ms back) so the two read as one motion. */
+  background-color: transparent;
+  backdrop-filter: blur(0px);
+  transition:
+    backdrop-filter 480ms var(--_ease-out),
+    background-color 480ms var(--_ease-out);
+}
+.bw-backdrop.bw-on {
+  background-color: color-mix(in srgb, var(--_canvas) 60%, transparent);
+  backdrop-filter: blur(10px);
+}
+.bw-closing .bw-backdrop {
+  transition-duration: 420ms;
+  transition-timing-function: var(--_ease-in-out);
+}
+.bw-fade {
+  transition:
+    opacity 300ms var(--_ease-out),
+    translate 300ms var(--_ease-out);
+}
+.bw-close {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 10;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--_accent);
+  transition:
+    color 150ms,
+    opacity 300ms var(--_ease-out);
+}
+.bw-close:hover {
+  color: var(--_fg);
+}
+.bw-close-key {
+  color: color-mix(in srgb, var(--_fg) 35%, transparent);
+}
+.bw-reader-grid {
+  pointer-events: none;
+  position: relative;
+  margin: -100cqh auto 0;
+  display: grid;
+  min-height: 100cqh;
+  width: 100%;
+  max-width: 1180px;
+  grid-template-columns: 1fr;
+  align-content: center;
+  align-items: center;
+  gap: 40px;
+  padding: 80px 24px;
+}
+.bw-meta {
+  order: 2;
+}
+/* Mirrors the meta column so the book sits in the middle. */
+.bw-balance {
+  display: none;
+  order: 3;
+}
+.bw-meta-when {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: color-mix(in srgb, var(--_fg) 45%, transparent);
+  text-transform: uppercase;
+}
+.bw-meta-title {
+  margin: 12px 0 0;
+  max-width: 14ch;
+  font-family: var(--_font-display);
+  font-variation-settings: var(--_font-display-settings);
+  font-size: clamp(28px, 3.4cqw, 44px);
+  line-height: 1.02;
+  font-weight: var(--bw-display-weight, 700);
+}
+.bw-meta-author {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--_fg) 70%, transparent);
+}
+.bw-meta-series {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--_fg) 45%, transparent);
+}
+.bw-meta-rating {
+  margin: 24px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--_accent);
+}
+.bw-meta-rating-n {
+  color: color-mix(in srgb, var(--_fg) 45%, transparent);
+}
+.bw-meta-count {
+  margin: 32px 0 0;
+  font-size: 11px;
+  color: color-mix(in srgb, var(--_fg) 35%, transparent);
+}
+.bw-center {
+  pointer-events: auto;
+  order: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+/* The perspective stage. Never transformed: the book's screen box is
+   measured on it, and it takes the grab, so the book can be caught however
+   it is turned (edge-on, a tipped book leaves only a cut edge to hit). */
+.bw-stage {
+  --w: min(40cqh, 64cqw, 340px);
+  position: relative;
+  perspective: 1800px;
+  cursor: grab;
+  touch-action: none;
+}
+.bw-stage:active {
+  cursor: grabbing;
+}
+/* Outside the book's 3D context: inside it, the shadow is a plane the tilted
+   book cuts through, and it shows across the cover. */
+.bw-floor {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -5%;
+  height: 10%;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.45);
+  filter: blur(40px);
+  transition: opacity 300ms;
+}
+.bw-fly {
+  position: relative;
+}
+.bw-tilt {
+  display: block;
+}
+/* The open book's orientation, written by the drag and the Flip button,
+   which also set the transition. */
+.lib-flipper {
+  transform-style: preserve-3d;
+  /* Pins the raster scale: without it every face is re-rastered at each
+     angle of a drag. */
+  will-change: transform;
+  transition: transform 600ms var(--_ease-in-out);
+}
+.bw-actions {
+  margin-top: 40px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font-size: 12px;
+}
+.bw-flip {
+  cursor: pointer;
+  border-radius: 999px;
+  background: var(--_fg);
+  color: var(--_canvas);
+  padding: 6px 12px;
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  outline: none;
+  transition: opacity 150ms;
+}
+.bw-flip:hover {
+  opacity: 0.85;
+}
+.bw-flip:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--_canvas),
+    0 0 0 4px var(--_accent);
+}
+@container (min-width: 768px) {
+  .bw-close {
+    top: 32px;
+    right: 40px;
+  }
+  .bw-reader-grid {
+    grid-template-columns: 1fr auto 1fr;
+    gap: 56px;
+  }
+  .bw-meta {
+    order: 1;
+    justify-self: end;
+    text-align: right;
+  }
+  .bw-meta-title {
+    margin-left: auto;
+  }
+  .bw-meta-rating {
+    justify-content: flex-end;
+  }
+  .bw-center {
+    order: 2;
+  }
+  .bw-balance {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lib-sheen,
+  .lib-lean,
+  .lib-cast,
+  .lib-flipper {
+    transition-duration: 0ms;
+  }
+  /* Reduced motion keeps the fades (200ms) and drops the rise. */
+  .bw-fade {
+    transition: opacity 200ms var(--_ease-out);
+  }
+  .bw-backdrop,
+  .bw-closing .bw-backdrop {
+    transition-duration: 200ms;
+  }
+  .bw-open-tag {
+    translate: -50% 0;
+  }
+}
