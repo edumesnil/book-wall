@@ -7,7 +7,7 @@ import { barcode, bookBox, rating } from "./book.js";
 import { aspectOf, lean, say, seriesLine, type Book, type Shelfed } from "./data.js";
 import { h } from "./dom.js";
 import { readOn, type Labels } from "./labels.js";
-import { reduced } from "./wall.js";
+import { STILL, reduced } from "./wall.js";
 
 const EASE_OUT = "cubic-bezier(0.23, 1, 0.32, 1)";
 const EASE_IN_OUT = "cubic-bezier(0.77, 0, 0.175, 1)";
@@ -349,14 +349,15 @@ export class Reader {
       d.ay += dy;
       if (!d.raf) d.raf = requestAnimationFrame(apply);
     };
-    const onUp = () => {
+    const onUp = (ev: Event) => {
       if (d.raf) {
         cancelAnimationFrame(d.raf);
         apply();
       }
       this.endDrag();
       this.calm = performance.now() + 800;
-      if (reduced()) return;
+      // Held still before letting go: it stays exactly where it is.
+      if (reduced() || ev.timeStamp - d.t > STILL) return;
       // A short coast on the release speed, decaying by time, then it stays.
       let { vx, vy } = d;
       let last = performance.now();
@@ -456,7 +457,8 @@ export class Reader {
     }
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      // While the book flies back, keys would swap in another book under it.
+      if (this.closing || e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key === "Escape") this.close();
       else if (e.key === "ArrowRight") this.o.onStep(1);
       else if (e.key === "ArrowLeft") this.o.onStep(-1);

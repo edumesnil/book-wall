@@ -28,12 +28,12 @@ const EN: Labels = {
   rating: (n) => `Rated ${n} out of 5`,
   pages: (n) => `${n} pages`,
   quote: (q) => `“${q}”`,
-  empty: "No books yet",
+  empty: "No books on the shelves yet.",
 };
 
 const FR: Labels = {
   hint: "Glissez ou défilez pour explorer",
-  reading: "En cours",
+  reading: "En cours de lecture",
   open: "Ouvrir",
   flip: "Retourner",
   flipLabel: "Glissez pour tourner le livre",
@@ -42,8 +42,8 @@ const FR: Labels = {
   readIn: (w) => `Lu en ${w}`,
   rating: (n) => `Noté ${n} sur 5`,
   pages: (n) => `${n} pages`,
-  quote: (q) => `« ${q} »`,
-  empty: "Aucun livre pour l’instant",
+  quote: (q) => `«\u00a0${q}\u00a0»`,
+  empty: "Aucun livre sur les tablettes pour l’instant.",
 };
 
 export const BUILT_IN: Record<string, Labels> = { en: EN, fr: FR };

@@ -88,7 +88,7 @@ describe("Goodreads import", () => {
   });
 
   it("rejects a file that isn't a known export", () => {
-    expect(() => importText("Title,Author\nDune,Frank Herbert\n")).toThrow(/known export/);
+    expect(() => importText("Title,Author\nDune,Frank Herbert\n")).toThrow(/look like a Goodreads export/);
   });
 });
 

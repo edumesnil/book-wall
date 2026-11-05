@@ -10,11 +10,12 @@ export function readLibrary(json: unknown): Library {
   if (Array.isArray(json)) return { version: 1, books: json as Entry[] };
   if (json && typeof json === "object") {
     const o = json as Partial<Library> & { version?: unknown };
-    if (o.version !== 1) throw new Error(`books.json: unsupported version ${String(o.version)}`);
-    if (!Array.isArray(o.books)) throw new Error("books.json: `books` must be an array");
+    if (o.version !== 1)
+      throw new Error(`This books.json is format version ${String(o.version)}, and this book-wall reads version 1. Update book-wall.`);
+    if (!Array.isArray(o.books)) throw new Error("This books.json has no list of books. Its \"books\" field should be an array.");
     return o as Library;
   }
-  throw new Error("books.json: expected an object with `version` and `books`");
+  throw new Error("This doesn't look like a books.json. Run book-wall import to make one.");
 }
 
 /** The entry as its source has it, with the hand corrections laid on top. */

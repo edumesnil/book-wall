@@ -160,7 +160,7 @@ export class BookWall extends HTMLElement {
       console.error("<book-wall>", e);
       this.teardown();
       this.root.replaceChildren(
-        h("p.bw-empty", { role: "status" }, `Couldn't load ${src}: ${(e as Error).message}`),
+        h("p.bw-empty", { role: "status" }, `Couldn't show the library. ${(e as Error).message}`),
       );
     }
   }
@@ -294,13 +294,15 @@ export class BookWall extends HTMLElement {
 
 async function getJson(url: string): Promise<unknown> {
   const res = await fetch(url);
-  if (!res.ok) throw new Error(res.status === 404 ? "not found" : `HTTP ${res.status}`);
+  const missing = `There's no file at ${url}. Check the src attribute.`;
+  if (res.status === 404) throw new Error(missing);
+  if (!res.ok) throw new Error(`${url} answered with an error (HTTP ${res.status}).`);
   const text = await res.text();
   try {
     return JSON.parse(text);
   } catch {
     // A dev server answers a missing file with its index page.
-    throw new Error(text.trimStart().startsWith("<") ? "not found (got an HTML page)" : "not valid JSON");
+    throw new Error(text.trimStart().startsWith("<") ? missing : `${url} isn't valid JSON.`);
   }
 }
 

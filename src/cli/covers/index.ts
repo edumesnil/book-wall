@@ -49,7 +49,7 @@ export const queryFor = (b: Book): Query =>
 async function load(src: string, base: string, get: Fetch): Promise<Buffer> {
   if (!/^https?:/i.test(src)) return readFile(isAbsolute(src) ? src : resolve(base, src));
   const res = await get(src, { headers: { "User-Agent": USER_AGENT } });
-  if (!res.ok) throw new Error(`${res.status} ${src}`);
+  if (!res.ok) throw new Error(`couldn't download ${src} (HTTP ${res.status})`);
   return Buffer.from(await res.arrayBuffer());
 }
 
@@ -103,7 +103,7 @@ export async function fetchCovers(opts: CoversOptions): Promise<CoverRow[]> {
   const only = new Set(opts.ids ?? []);
   const books = visible(readLibrary(JSON.parse(await readFile(opts.books, "utf8"))));
   for (const id of only)
-    if (!books.some((b) => b.id === id)) log(`unknown id: ${id}`);
+    if (!books.some((b) => b.id === id)) console.warn(`No book has the id "${id}" in ${opts.books}.`);
 
   let manifest: Covers = {};
   try {
@@ -128,7 +128,7 @@ export async function fetchCovers(opts: CoversOptions): Promise<CoverRow[]> {
       if (!url && (url = await apple.find(q))) source = "apple";
       if (!url && (url = await openLibrary(q, get))) source = "openlibrary";
       if (!url || !source) {
-        report.push([b.id, "none", "stays typographic"]);
+        report.push([b.id, "none", "no cover found, it gets a typographic one"]);
         continue;
       }
       const size = await writeCover(await load(url, base, get), dir, b.id);

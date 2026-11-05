@@ -1,6 +1,6 @@
 # books.json, version 1
 
-`book-wall import` writes it, `<book-wall>` reads it, and you can edit it by hand. The JSON Schema is in [`schema/books.v1.json`](../schema/books.v1.json); the `$schema` line at the top of the file lets most editors check your edits as you type.
+`book-wall import` writes this file, `<book-wall>` reads it, and you can edit it by hand. Its JSON Schema is [`schema/books.v1.json`](../schema/books.v1.json). The `$schema` line at the top of the file lets most editors check your edits as you type.
 
 ```json
 {
@@ -30,43 +30,43 @@
 }
 ```
 
-## Re-importing is safe
+## Importing again
 
-Run `book-wall import` again whenever you've read more. Books are matched on their Goodreads id, so:
+Run `book-wall import` whenever you've read more. The import finds each book by its Goodreads id, then:
 
-- what Goodreads owns is refreshed: `title`, `author`, `series`, `volume`, `status`, `read`, `rating`, `pages`, `isbn`, `binding`;
-- everything else on an entry is kept: `quote`, `note`, `tone`, `layout`, `cover`, `override`, and any field you add yourself;
-- the `id` never changes once given, even if the title does, so cover files keep their names;
-- entries without a `goodreads` id (books you added by hand) are left alone;
-- a book that left your read shelves is removed, and the import lists it by title.
+- refreshes the fields Goodreads knows about, which are `title`, `author`, `series`, `volume`, `status`, `read`, `rating`, `pages`, `isbn` and `binding`;
+- keeps every other field as you left it, including `quote`, `note`, `tone`, `layout`, `cover`, `override` and any field you made up;
+- never changes a book's `id` once it has one, even if the title changes, so its cover files keep their names;
+- leaves alone the books you added by hand, the ones without a `goodreads` id;
+- removes a book that left your read shelves on Goodreads, and prints its title so you notice.
 
-To correct something Goodreads gets wrong, don't edit the field itself: the next import would put it back. Put the correction under `override`.
+If Goodreads gets something wrong, editing the field won't last, because the next import puts the old value back. Write the correction under `override`.
 
 ## Fields
 
-Only `id`, `title` and `author` are required.
+A book needs an `id`, a `title` and an `author`. Everything else is optional.
 
 | Field | What it does |
 | --- | --- |
-| `id` | Stable slug, made from the title on first import. Names the cover files. |
-| `goodreads` | Goodreads' Book Id. What a re-import matches on. |
+| `id` | A short name made from the title on the first import. The cover files use it. |
+| `goodreads` | The book's id on Goodreads. The import matches books on it. |
 | `title`, `author` | Printed on the cover and the spine. |
-| `read` | Date read, `YYYY-MM-DD` (or `YYYY-MM`, `YYYY`). Orders the wall, newest first. |
+| `read` | The date you read it, as `YYYY-MM-DD`, `YYYY-MM` or `YYYY`. The wall puts the most recent first. |
 | `status` | `"reading"` puts the book on the nightstand, the first shelf. |
-| `series`, `volume` | A series stands together on the wall, in volume order, and shares one cover design. |
-| `pages` | Sets the book's thickness. |
-| `rating` | 0 to 5, fractions allowed. |
-| `isbn` | ISBN-13. Prints a real EAN-13 barcode on the back, and finds the cover. |
-| `binding` | Goodreads' format name. A hardcover gets thick boards that stand proud of the pages, a paperback a flush card wrapper. |
-| `cover` | A cover image pinned by hand, used by `book-wall covers`: a URL, or a path to a local file, relative to books.json. |
-| `tone` | Colour of the typographic cover drawn when there is no image: `bone`, `sage`, `moss`, `clay`, `ochre`, `ink`, `oxblood`, `slate`, `mist`. Picked from the title if absent. |
-| `layout` | Typographic cover layout: `classic`, `band`, `frame`. Picked from the title if absent. |
-| `quote` | One line, set large on the back cover. |
-| `note` | The back-cover text. A string, or one per language: `{ "en": "…", "fr": "…" }`. |
+| `series`, `volume` | Books of a series stand together, in volume order, and share one cover design. |
+| `pages` | How thick the book is. |
+| `rating` | From 0 to 5. Fractions work. |
+| `isbn` | The ISBN-13. It prints a barcode on the back that a scanner can read, and helps find the cover. |
+| `binding` | The format, as Goodreads names it. `Hardcover` gets thick boards that stick out past the pages. Anything else is built as a paperback, with a thin cover cut flush. |
+| `cover` | A cover you chose, for `book-wall covers` to use: an image URL, or the path to a file, relative to `books.json`. |
+| `tone` | The colour of the typographic cover, for a book without an image. One of `bone`, `sage`, `moss`, `clay`, `ochre`, `ink`, `oxblood`, `slate`, `mist`. Chosen from the title if you don't set it. |
+| `layout` | The typographic cover's layout, `classic`, `band` or `frame`. Chosen from the title if you don't set it. |
+| `quote` | One line, printed large on the back. |
+| `note` | The text on the back. Either a string, or one string per language, as in `{ "en": "…", "fr": "…" }`. |
 
-## `override`: corrections that survive a re-import
+## override
 
-Anything under `override` is laid over the entry when the wall reads it.
+The wall lays everything under `override` over the book's own fields.
 
 ```json
 "override": {
@@ -77,20 +77,20 @@ Anything under `override` is laid over the entry when the wall reads it.
 }
 ```
 
-- A value replaces the field: `"binding": "Paperback"`.
-- `null` removes the field: `"series": null` takes the book out of its series.
-- `"hidden": true` drops the book from the wall without deleting it.
-- `"coverTitle"` searches covers by another edition's title, for when the edition you read has no good cover (a translation whose original has a real one). The ISBN is ignored for that search.
+- A value replaces the field. `"binding": "Paperback"` turns a hardcover into a paperback.
+- `null` removes the field. `"series": null` takes the book out of its series.
+- `"hidden": true` takes the book off the wall without deleting it.
+- `"coverTitle"` searches covers under another title. Use it when the edition you read has no good cover and another one does, such as a translation of a novel with a well-known original. The search ignores the ISBN in that case.
 
-Typical use: an omnibus edition that duplicates books you also logged one by one. Hide the omnibus, or hide the volumes.
+Hiding is the usual fix for an omnibus that repeats books you also logged one at a time. Hide the omnibus, or hide the single volumes.
 
-## `aliases`: what a series or an author is called
+## aliases
 
-Goodreads puts a book's series inside its title, `The Salt Orchard (Lanternfall, #1)`, and doesn't always spell it the same way from one volume to the next. Spelled two ways, one series becomes two: two cover designs, two places on the wall.
+Goodreads puts the series inside the title, as in `The Salt Orchard (Lanternfall, #1)`, and it doesn't always spell the series the same way twice. A series spelled two ways becomes two series on the wall, with two cover designs, in two places.
 
-**Most of the time you don't have to do anything.** The import merges spellings that differ only by case, accents, punctuation or a leading article. `The Lanternfall` and `Lanternfall`, `L'Assassin royal` and `Assassin Royal` end up as one series, under the spelling most of its books use. The same goes for authors: `J.R.R. Tolkien` and `J. R. R. Tolkien` become one name.
+You usually don't have to do anything about it. The import merges names that differ only by case, accents, punctuation or a leading article. `The Lanternfall` and `Lanternfall` become one series, and so do `L'Assassin royal` and `Assassin Royal`. The merged series takes the spelling most of its books use. Authors get the same treatment, so `J.R.R. Tolkien` and `J. R. R. Tolkien` become one person.
 
-**Aliases are for the rest: names you prefer.** No program can guess that you want Liu Cixin's trilogy shelved as *The Three-Body Problem* rather than Goodreads' *Remembrance of Earth's Past*, or the author written *Liu Cixin* rather than *Cixin Liu*. Write it once:
+Aliases are for the names you prefer, which no program can guess. Say you want Liu Cixin's trilogy shelved as *The Three-Body Problem* instead of Goodreads' *Remembrance of Earth's Past*, and his name written *Liu Cixin*. Write it once.
 
 ```json
 "aliases": {
@@ -99,34 +99,41 @@ Goodreads puts a book's series inside its title, `The Salt Orchard (Lanternfall,
 }
 ```
 
-- The key is the name as Goodreads writes it, matched as loosely as above, so one key covers every spelling of it.
-- The value is the name the wall prints.
-- Aliases are applied on every import, so a volume you read next year lands in the right series without a second edit.
+- On the left goes the name as Goodreads writes it. The match ignores case and punctuation, so one entry covers every spelling.
+- On the right goes the name the wall prints.
+- The import applies aliases every time, so a volume you read next year joins the right series without another edit.
 
-**When the import isn't sure, it asks.** If two series look alike but aren't close enough to merge on their own, the import says so:
+Sometimes two series look alike but differ too much to merge safely. The import tells you instead of guessing.
 
 ```
-series "Starward Saga" and "Starward" look alike: add an alias in books.json if they are one
+"Starward Saga" and "Starward" look like the same series. If they are, add an alias in books.json.
 ```
 
-If they are one series, map both to the name you want:
+If they are the same series, send both to the name you want.
 
 ```json
 "series": { "starward saga": "Starward", "starward": "Starward" }
 ```
 
-**Aliases or `override`?** An alias renames a series or an author everywhere, now and on every future import. An `override` corrects one book. To pull a single volume out of a series, use `"override": { "series": null }`; to rename the series, use an alias.
+An alias renames a series or an author in every book, now and in every future import. An override changes one book. To take a single volume out of its series, use `"override": { "series": null }`. To rename the series, use an alias.
 
 ## covers/covers.json
 
-Written by `book-wall covers`, next to the images, keyed by book id:
+`book-wall covers` writes this file next to the images, with one entry per book id.
 
 ```json
 { "the-salt-orchard": { "w": 1400, "h": 2100, "source": "apple", "spine": "#606745", "tint": "#c7d42b", "backInk": "dark" } }
 ```
 
-`w` and `h` give the cover's proportions before the image loads. `spine` is sampled from the cover's hinge edge, `tint` is the colour the cover reads as (it washes the back), `backInk` the ink that reads best on that back, worked out on the wash and the tint together. Rerunning `book-wall covers` recomputes `spine`, `tint` and `backInk` for every cover without downloading anything again. Each book has three images: `<id>.webp` (720 px wide, the open book), `<id>.sm.webp` (320 px, the wall) and `<id>.back.webp` (48 px, pre-blurred, the back cover).
+- `w` and `h` are the size of the original image. The wall uses them to give the book the right shape before the image loads.
+- `spine` is a colour sampled from the cover's left edge.
+- `tint` is the colour the cover reads as. It colours the back.
+- `backInk` is `dark` or `light`, whichever is easier to read on the back.
+
+Rerunning `book-wall covers` recomputes `spine`, `tint` and `backInk` for every book, without downloading anything again.
+
+Each book with a cover has three images. `<id>.webp` is 720 pixels wide, for the open book. `<id>.sm.webp` is 320 pixels, for the wall. `<id>.back.webp` is 48 pixels and already blurred, for the back.
 
 ## Older files
 
-A books.json written before the format had a version (a bare array of books) is still read, and becomes version 1 on the next import.
+A `books.json` from before the format had a version number is a plain list of books. book-wall still reads it, and the next import rewrites it as version 1.

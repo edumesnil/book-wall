@@ -37,6 +37,8 @@ const OVERSCAN = 1;
 const TRIAL_ROW = 0;
 /** Frame budget for mounting cells, in ms. */
 const BUDGET = 6;
+/** A pointer held this long (ms) before release has stopped: no coast. */
+export const STILL = 80;
 
 export type Cam = { x: number; y: number };
 
@@ -229,7 +231,9 @@ export class Wall {
     c.x = this.el.scrollLeft - this.origin;
     c.y = this.el.scrollTop - this.origin;
     const limit = this.origin / 2;
+    let jumped = false;
     if (Math.abs(c.x) > limit || Math.abs(c.y) > limit) {
+      jumped = true;
       const px = this.n * this.m.cw;
       const py = this.n * this.m.rh;
       const kx = Math.round(c.x / px) * px;
@@ -253,8 +257,9 @@ export class Wall {
       j1: Math.ceil((c.y + this.vh) / m.rh),
     };
     if (!covers(this.range, need)) {
-      const first = !this.range;
-      this.render({ ...need, i0: need.i0 - OVERSCAN, i1: need.i1 + OVERSCAN }, first);
+      // A recentre jumps a whole period: every cell is new, so mount them
+      // at once rather than over several frames of empty shelves.
+      this.render({ ...need, i0: need.i0 - OVERSCAN, i1: need.i1 + OVERSCAN }, !this.range || jumped);
     }
   };
 
@@ -286,10 +291,12 @@ export class Wall {
       vp.scrollLeft -= dx;
       vp.scrollTop -= dy;
     };
-    const onUp = () => {
+    const onUp = (e: PointerEvent) => {
       if (!this.drag) return;
       if (this.drag.moved) this.suppress = true;
-      if (reduced()) this.vx = this.vy = 0;
+      // A drag that stopped before the release doesn't coast: the speed is
+      // only updated on a move, so it would still be the last move's.
+      if (reduced() || e.timeStamp - this.drag.t > STILL) this.vx = this.vy = 0;
       this.drag = null;
       delete vp.dataset.dragging;
       setTimeout(() => (this.suppress = false), 0);
@@ -406,7 +413,8 @@ export class Wall {
     const vars: Record<string, string | number> = { "--lean": `${lean(b)}deg`, "--t": thickness(b) };
     // Square art (Audible Originals) is a square box on every shelf.
     if (isSquare(this.d, b)) vars["--ar"] = 1;
-    if (j === TRIAL_ROW) {
+    // Modulo n: after a vertical recentre, row n is the same shelf as row 0.
+    if (mod(j, this.n) === TRIAL_ROW) {
       vars["--w"] = `${(m.bw * scaleOf(b)).toFixed(1)}px`;
       vars["--ar"] = aspectOf(this.d, b);
     }

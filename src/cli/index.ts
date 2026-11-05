@@ -5,29 +5,31 @@ import { parseArgs } from "node:util";
 import { fetchCovers } from "./covers/index.js";
 import { importFile } from "./import.js";
 
-const HELP = `book-wall: your reading as a wall of 3D books
+const HELP = `book-wall turns a Goodreads export into a wall of 3D books.
 
 Usage
-  book-wall import <export.csv> [--out books.json] [--from goodreads]
-  book-wall covers [id…] [--books books.json] [--out <folder>] [--force] [--pinned]
+  book-wall import <export.csv> [--out books.json]
+  book-wall covers [id ...] [--books books.json] [--out <folder>] [--force] [--pinned]
 
-import   Reads a Goodreads library export (My Books → Import and export →
-         Export library) into books.json. Safe to rerun: books match on their
-         Goodreads id, and everything written by hand is kept.
+import   Reads your Goodreads export and writes books.json. To get the
+         export, go to My Books, then Import and export, then Export library.
+         Run it again whenever you like: it finds each book by its Goodreads
+         id and keeps everything you wrote by hand.
 
-covers   Fetches a cover for every book without one (Apple Books, then Open
-         Library) and writes <folder>/<id>.webp, .sm.webp, .back.webp and
-         <folder>/covers.json. The folder defaults to covers/ beside
-         books.json. Pass ids to refetch only those, --force to refetch all.
+covers   Downloads a cover for each book that doesn't have one yet, from
+         Apple Books or Open Library, into a covers folder next to
+         books.json. List ids to download only those books again.
 
 Options
-  -o, --out      output file (import) or folder (covers)
-  -b, --books    books.json to read (covers), default ./books.json
-  -f, --force    refetch every cover
-      --pinned   only books with a \`cover\` pinned in books.json; never search
-      --from     source format, when detection fails
+  -o, --out      where to write books.json (import) or the covers (covers)
+  -b, --books    the books.json to read (covers). Default: ./books.json
+  -f, --force    download every cover again
+      --pinned   only books whose \`cover\` you set in books.json; never search
+      --from     the export's source, if book-wall can't tell (goodreads)
   -h, --help
   -v, --version
+
+Docs: https://github.com/edumesnil/book-wall
 `;
 
 async function main(argv: string[]) {
@@ -58,17 +60,17 @@ async function main(argv: string[]) {
 
   if (cmd === "import") {
     const csv = rest[0];
-    if (!csv) throw new Error("usage: book-wall import <export.csv>");
+    if (!csv) throw new Error("Which export? Run book-wall import <export.csv>.");
     const out = values.out ?? "books.json";
     const { library, report, source, rows } = await importFile(csv, out, values.from);
-    console.log(`${out}: ${library.books.length} books from ${source} (${rows} rows in the export)`);
-    if (report.added.length) console.log(`  added    ${report.added.length}`);
-    console.log(`  updated  ${report.updated}`);
-    if (report.kept) console.log(`  kept     ${report.kept} from other sources or written by hand`);
+    console.log(`Wrote ${out}: ${library.books.length} books, from ${rows} rows in the ${source} export.`);
+    if (report.added.length) console.log(`  ${report.added.length} new`);
+    if (report.updated) console.log(`  ${report.updated} updated`);
+    if (report.kept) console.log(`  ${report.kept} added by hand, left as they were`);
     if (report.removed.length)
-      console.log(`  removed  ${report.removed.length}, no longer on a read shelf: ${report.removed.join("; ")}`);
+      console.log(`  ${report.removed.length} removed, no longer on a read shelf: ${report.removed.join("; ")}`);
     for (const [a, b] of report.near)
-      console.log(`  series "${a}" and "${b}" look alike: add an alias in books.json if they are one`);
+      console.log(`"${a}" and "${b}" look like the same series. If they are, add an alias in books.json.`);
     return;
   }
 
@@ -81,20 +83,30 @@ async function main(argv: string[]) {
       ids: rest,
       force: !!values.force,
       pinned: !!values.pinned,
-      log: (l) => process.stderr.write(`\r\x1b[K${l}`),
+      // Progress on one line that rewrites itself, in a terminal only.
+      log: (l) => process.stderr.isTTY && process.stderr.write(`\r\x1b[K${l}`),
     });
-    process.stderr.write("\r\x1b[K");
+    if (process.stderr.isTTY) process.stderr.write("\r\x1b[K");
     for (const [id, src, info] of report) console.log(`${src.padEnd(12)} ${id.padEnd(42)} ${info}`);
     const low = report.filter(([, , info]) => /^\d+×/.test(info) && parseInt(info) < 600);
-    if (low.length) console.log(`\n${low.length} cover(s) under 600px wide: worth pinning a better \`cover\`.`);
-    if (!report.length) console.log("Every book already has a cover. Pass ids or --force to refetch.");
+    if (low.length)
+      console.log(
+        `\n${low.length === 1 ? "1 cover is" : `${low.length} covers are`} under 600 pixels wide and will look soft. ` +
+          "To use a sharper one, put its URL in the book's `cover` field and run book-wall covers <id>.",
+      );
+    if (!report.length)
+      console.log(
+        rest.length
+          ? "None of those ids matched a book, so nothing was downloaded."
+          : "Every book already has a cover. To download some again, list their ids, or use --force for all.",
+      );
     return;
   }
 
-  throw new Error(`unknown command "${cmd}". Run book-wall --help.`);
+  throw new Error(`There's no "${cmd}" command. Run book-wall --help to see the commands.`);
 }
 
 main(process.argv.slice(2)).catch((e: NodeJS.ErrnoException) => {
-  console.error(`book-wall: ${e.code === "ENOENT" ? `no such file: ${e.path}` : e.message}`);
+  console.error(e.code === "ENOENT" ? `Can't find ${e.path}. Check the path and try again.` : e.message);
   process.exit(1);
 });

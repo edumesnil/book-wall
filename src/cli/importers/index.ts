@@ -8,14 +8,14 @@ export const IMPORTERS: Importer[] = [goodreads];
 export function pickImporter(headers: string[], from?: string): Importer {
   if (from) {
     const i = IMPORTERS.find((x) => x.source === (from as Source));
-    if (!i) throw new Error(`unknown source "${from}" (known: ${IMPORTERS.map((x) => x.source).join(", ")})`);
+    if (!i) throw new Error(`book-wall can't import from "${from}" yet. It reads ${IMPORTERS.map((x) => x.source).join(", ")}.`);
     return i;
   }
   const i = IMPORTERS.find((x) => x.detect(headers));
   if (!i)
     throw new Error(
-      `this file doesn't look like a known export (${IMPORTERS.map((x) => x.name).join(", ")}). ` +
-        "Use the CSV exactly as the site produces it.",
+      `This file doesn't look like a ${IMPORTERS.map((x) => x.name).join(" or ")} export. ` +
+        "Use the CSV as you downloaded it: opening and saving it in a spreadsheet can change its columns.",
     );
   return i;
 }

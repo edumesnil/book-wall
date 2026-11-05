@@ -153,7 +153,7 @@ for (const [id, { met: objectId, focus }] of Object.entries(plan)) {
   if (!(o.objectEndDate < 1900)) throw new Error(`${id}: Met object ${objectId} is dated ${o.objectEndDate}`);
   const src = await cached(`met-${objectId}.jpg`, o.primaryImage);
   await writeFile(`${ART}${id}.jpg`, await compose({ title: b.title, author: b.author, focus }, await readFile(src), fonts));
-  credits.push({ book: b.title, author: b.author, title: o.title, artist: o.artistDisplayName || "Unknown artist", date: o.objectDate, url: o.objectURL });
+  credits.push({ book: b.title, author: b.author, title: o.title.split(/[:(]/)[0].replace(/,\s*also known as.*$/, "").trim(), artist: o.artistDisplayName || "Unknown artist", date: o.objectDate, url: o.objectURL });
   console.log(`${id.padEnd(40)} ${o.artistDisplayName}, ${o.title}`);
 }
 
@@ -162,26 +162,26 @@ await writeFile(
   `${DEMO}CREDITS.md`,
   `# Demo credits
 
-Everything in the demo is in the public domain or under an open licence. None of it is covered by the project's MIT licence: each item keeps its own terms, listed here.
+The demo uses only public-domain works and openly licensed fonts. The project's MIT licence covers the code, not these. Each one keeps the terms listed below.
 
 ## Books
 
-The demo library lists public-domain classics. The read dates, ratings, notes and ISBNs are made up. The quotes on the back covers are from the original English texts.
+The demo shelves public-domain classics. Their read dates, ratings, notes and ISBNs are invented. The quotes on the back covers come from the original English texts.
 
 ## Cover art
 
-Each cover with a picture is composed by \`demo/scripts/paintings.mjs\` from a work in The Metropolitan Museum of Art's Open Access collection, released under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/). The script only accepts works The Met marks as public domain and made before 1900, so they are out of copyright everywhere, not only in the United States. Books without a painting are drawn as typographic covers by the element.
+\`demo/scripts/paintings.mjs\` composes each illustrated cover from a work in the Open Access collection of The Metropolitan Museum of Art, which releases these images under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/). The script only takes works The Met marks as public domain and that date from before 1900, so they're out of copyright in every country, not only in the United States. Books without a picture get a typographic cover drawn by the element.
 
-| Book | Author | Painting | Artist | Date |
+| Book | Author | Work | Artist | Date |
 | --- | --- | --- | --- | --- |
 ${credits.map(row).join("\n")}
 
 ## Fonts
 
-- [Instrument Serif](https://github.com/Instrument/instrument-serif), the Instrument Serif Project Authors: SIL Open Font License 1.1 (\`demo/public/fonts/InstrumentSerif-OFL.txt\`)
-- [IBM Plex Mono](https://github.com/IBM/plex), IBM: SIL Open Font License 1.1 (\`demo/public/fonts/IBMPlexMono-OFL.txt\`)
+- [Instrument Serif](https://github.com/Instrument/instrument-serif), by the Instrument Serif Project Authors, under the SIL Open Font License 1.1 (\`demo/public/fonts/InstrumentSerif-OFL.txt\`)
+- [IBM Plex Mono](https://github.com/IBM/plex), by IBM, under the SIL Open Font License 1.1 (\`demo/public/fonts/IBMPlexMono-OFL.txt\`)
 
-Both are used on the demo page and set the type on the composed covers.
+The demo page uses both, and the composed covers are set in them.
 `,
 );
 console.log(`\n${credits.length} covers in demo/art/, credits in demo/CREDITS.md`);

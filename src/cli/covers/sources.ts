@@ -59,7 +59,7 @@ export class Apple {
       if (d > 0) await this.wait(d);
       this.last = this.now();
       const res = await this.get(`https://itunes.apple.com/${path}`);
-      if (!res.ok) throw new Error(`iTunes ${res.status}`);
+      if (!res.ok) throw new Error(`Apple Books didn't answer (HTTP ${res.status}). Try again in a few minutes.`);
       return (((await res.json()) as { results?: AppleResult[] }).results ?? []) as AppleResult[];
     };
     const p = this.queue.then(run, run);
