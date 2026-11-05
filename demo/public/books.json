@@ -1,0 +1,325 @@
+{
+  "$schema": "https://unpkg.com/book-wall/schema/books.v1.json",
+  "version": 1,
+  "aliases": {
+    "series": {},
+    "authors": {}
+  },
+  "books": [
+    {
+      "id": "war-and-peace",
+      "goodreads": "1000001",
+      "title": "War and Peace",
+      "author": "Leo Tolstoy",
+      "status": "reading",
+      "pages": 1296,
+      "isbn": "9780000100009",
+      "binding": "Hardcover",
+      "note": {
+        "en": "A chapter a night, all winter. Halfway, and Pierre still has no idea what he wants.",
+        "fr": "Un chapitre par soir, tout l’hiver. À mi-chemin, et Pierre ne sait toujours pas ce qu’il veut."
+      },
+      "cover": "../art/war-and-peace.jpg"
+    },
+    {
+      "id": "twenty-thousand-leagues-under-the-seas",
+      "goodreads": "1000002",
+      "title": "Twenty Thousand Leagues Under the Seas",
+      "author": "Jules Verne",
+      "read": "2026-10-02",
+      "rating": 4,
+      "pages": 426,
+      "isbn": "9780000100016",
+      "binding": "Paperback",
+      "quote": "The sea is everything.",
+      "note": {
+        "en": "Nemo’s library aboard the Nautilus is the real hero.",
+        "fr": "Le vrai héros, c’est la bibliothèque du Nautilus."
+      },
+      "cover": "../art/twenty-thousand-leagues-under-the-seas.jpg"
+    },
+    {
+      "id": "moby-dick",
+      "goodreads": "1000003",
+      "title": "Moby-Dick; or, The Whale",
+      "author": "Herman Melville",
+      "read": "2026-08-19",
+      "rating": 5,
+      "pages": 635,
+      "isbn": "9780000100023",
+      "binding": "Hardcover",
+      "quote": "Call me Ishmael.",
+      "note": {
+        "en": "Skipped none of the whaling chapters. Proud of that.",
+        "fr": "Je n’ai sauté aucun chapitre sur la chasse. J’en suis fier."
+      },
+      "override": {
+        "title": "Moby-Dick"
+      },
+      "cover": "../art/moby-dick.jpg"
+    },
+    {
+      "id": "frankenstein",
+      "goodreads": "1000004",
+      "title": "Frankenstein",
+      "author": "Mary Wollstonecraft Shelley",
+      "read": "2026-06-30",
+      "rating": 4,
+      "pages": 280,
+      "isbn": "9780000100030",
+      "binding": "Paperback",
+      "quote": "Beware; for I am fearless, and therefore powerful.",
+      "note": {
+        "en": "The creature argues better than anyone else in the book.",
+        "fr": "La créature argumente mieux que tout le monde dans ce livre."
+      },
+      "cover": "../art/frankenstein.jpg"
+    },
+    {
+      "id": "dracula",
+      "goodreads": "1000005",
+      "title": "Dracula",
+      "author": "Bram Stoker",
+      "read": "2026-04-11",
+      "rating": 4,
+      "pages": 418,
+      "isbn": "9780000100047",
+      "binding": "Mass Market Paperback",
+      "quote": "Listen to them, the children of the night. What music they make!",
+      "note": {
+        "en": "Told in letters and diaries, so it reads like a case file.",
+        "fr": "Raconté en lettres et en journaux : on lit un dossier d’enquête."
+      },
+      "cover": "../art/dracula.jpg"
+    },
+    {
+      "id": "wuthering-heights",
+      "goodreads": "1000006",
+      "title": "Wuthering Heights",
+      "author": "Emily Brontë",
+      "read": "2026-02-14",
+      "rating": 5,
+      "pages": 342,
+      "isbn": "9780000100054",
+      "binding": "Paperback",
+      "quote": "Whatever our souls are made of, his and mine are the same.",
+      "note": {
+        "en": "Everyone is awful and I could not stop.",
+        "fr": "Tout le monde est odieux et je n’ai pas pu m’arrêter."
+      },
+      "cover": "../art/wuthering-heights.jpg"
+    },
+    {
+      "id": "the-awakening",
+      "goodreads": "1000007",
+      "title": "The Awakening",
+      "author": "Kate Chopin",
+      "read": "2025-11-03",
+      "rating": 4,
+      "pages": 195,
+      "isbn": "9780000100061",
+      "binding": "Paperback",
+      "quote": "The voice of the sea is seductive.",
+      "note": {
+        "en": "Short, and it stays with you for weeks.",
+        "fr": "Court, et il reste en tête des semaines."
+      },
+      "cover": "../art/the-awakening.jpg"
+    },
+    {
+      "id": "vanity-fair",
+      "goodreads": "1000008",
+      "title": "Vanity Fair",
+      "author": "William Makepeace Thackeray",
+      "read": "2025-09-21",
+      "rating": 3,
+      "pages": 912,
+      "isbn": "9780000100078",
+      "binding": "Hardcover",
+      "note": {
+        "en": "Becky Sharp runs circles around the narrator.",
+        "fr": "Becky Sharp mène le narrateur par le bout du nez."
+      },
+      "cover": "../art/vanity-fair.jpg"
+    },
+    {
+      "id": "the-portrait-of-a-lady",
+      "goodreads": "1000009",
+      "title": "The Portrait of a Lady",
+      "author": "Henry James",
+      "read": "2025-07-08",
+      "rating": 4,
+      "pages": 656,
+      "isbn": "9780000100085",
+      "binding": "Paperback",
+      "quote": "I always want to know the things one shouldn’t do.",
+      "note": {
+        "en": "Slow, then the last hundred pages hit all at once.",
+        "fr": "Lent, puis les cent dernières pages frappent d’un coup."
+      },
+      "cover": "../art/the-portrait-of-a-lady.jpg"
+    },
+    {
+      "id": "madame-bovary",
+      "goodreads": "1000010",
+      "title": "Madame Bovary",
+      "author": "Gustave Flaubert",
+      "read": "2025-05-27",
+      "rating": 4.5,
+      "pages": 329,
+      "isbn": "9780000100092",
+      "binding": "Paperback",
+      "note": {
+        "en": "Read it for the sentences. Flaubert rewrote each one for days.",
+        "fr": "À lire pour les phrases : Flaubert passait des jours sur chacune."
+      },
+      "cover": "../art/madame-bovary.jpg"
+    },
+    {
+      "id": "the-phantom-of-the-opera",
+      "goodreads": "1000011",
+      "title": "The Phantom of the Opera",
+      "author": "Gaston Leroux",
+      "read": "2025-03-15",
+      "rating": 3,
+      "pages": 360,
+      "isbn": "9780000100108",
+      "binding": "Mass Market Paperback",
+      "note": {
+        "en": "Stranger and funnier than the musical.",
+        "fr": "Plus étrange et plus drôle que la comédie musicale."
+      },
+      "cover": "../art/the-phantom-of-the-opera.jpg"
+    },
+    {
+      "id": "the-lost-world",
+      "goodreads": "1000012",
+      "title": "The Lost World",
+      "author": "Arthur Conan Doyle",
+      "series": "Professor Challenger",
+      "volume": 1,
+      "read": "2025-01-09",
+      "rating": 4,
+      "pages": 309,
+      "isbn": "9780000100115",
+      "binding": "Paperback",
+      "quote": "There are heroisms all round us waiting to be done.",
+      "note": {
+        "en": "Pure adventure. Challenger is a magnificent menace.",
+        "fr": "Aventure pure. Challenger est une menace magnifique."
+      },
+      "cover": "../art/the-lost-world.jpg"
+    },
+    {
+      "id": "the-iliad",
+      "goodreads": "1000013",
+      "title": "The Iliad",
+      "author": "Homer",
+      "read": "2024-10-30",
+      "rating": 5,
+      "pages": 683,
+      "isbn": "9780000100122",
+      "binding": "Hardcover",
+      "note": {
+        "en": "Read aloud, a book at a time. It is meant to be heard.",
+        "fr": "Lu à voix haute, un chant à la fois. C’est fait pour être entendu."
+      },
+      "cover": "../art/the-iliad.jpg"
+    },
+    {
+      "id": "the-republic",
+      "goodreads": "1000014",
+      "title": "The Republic",
+      "author": "Plato",
+      "read": "2024-08-12",
+      "rating": 3,
+      "pages": 416,
+      "isbn": "9780000100139",
+      "binding": "Paperback",
+      "note": {
+        "en": "Argued with it in the margins the whole way.",
+        "fr": "J’ai argumenté dans les marges du début à la fin."
+      },
+      "cover": "../art/the-republic.jpg"
+    },
+    {
+      "id": "little-women",
+      "goodreads": "1000015",
+      "title": "Little Women",
+      "author": "Louisa May Alcott",
+      "read": "2024-06-02",
+      "rating": 4,
+      "pages": 449,
+      "isbn": "9780000100146",
+      "binding": "Hardcover",
+      "quote": "I’m not afraid of storms, for I’m learning how to sail my ship.",
+      "note": {
+        "en": "Jo, forever.",
+        "fr": "Jo, pour toujours."
+      },
+      "cover": "../art/little-women.jpg"
+    },
+    {
+      "id": "a-study-in-scarlet",
+      "goodreads": "1000016",
+      "title": "A Study in Scarlet",
+      "author": "Arthur Conan Doyle",
+      "series": "Sherlock Holmes",
+      "volume": 1,
+      "read": "2024-03-18",
+      "rating": 4,
+      "pages": 108,
+      "isbn": "9780000100153",
+      "binding": "Paperback",
+      "quote": "There’s the scarlet thread of murder running through the colourless skein of life."
+    },
+    {
+      "id": "the-sign-of-the-four",
+      "goodreads": "1000017",
+      "title": "The Sign of the Four",
+      "author": "Arthur Conan Doyle",
+      "series": "Sherlock Holmes",
+      "volume": 2,
+      "read": "2024-03-25",
+      "rating": 4,
+      "pages": 129,
+      "isbn": "9780000100160",
+      "binding": "Paperback",
+      "quote": "When you have eliminated the impossible, whatever remains, however improbable, must be the truth."
+    },
+    {
+      "id": "the-hound-of-the-baskervilles",
+      "goodreads": "1000018",
+      "title": "The Hound of the Baskervilles",
+      "author": "Arthur Conan Doyle",
+      "series": "Sherlock Holmes",
+      "volume": 5,
+      "read": "2024-04-06",
+      "rating": 5,
+      "pages": 256,
+      "isbn": "9780000100177",
+      "binding": "Paperback",
+      "note": {
+        "en": "The moor does half the work.",
+        "fr": "La lande fait la moitié du travail."
+      }
+    },
+    {
+      "id": "walden",
+      "goodreads": "1000019",
+      "title": "Walden; or, Life in the Woods",
+      "author": "Henry David Thoreau",
+      "rating": 4,
+      "pages": 352,
+      "isbn": "9780000100184",
+      "binding": "Paperback",
+      "note": {
+        "en": "Read on a porch, which felt like cheating.",
+        "fr": "Lu sur une galerie, ce qui ressemblait à de la triche."
+      },
+      "override": {
+        "title": "Walden"
+      }
+    }
+  ]
+}

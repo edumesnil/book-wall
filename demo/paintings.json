@@ -1,0 +1,18 @@
+{
+  "$comment": "Which painting each demo cover uses: a Met Open Access object id, and where to crop (x y, 0–1). Used by demo/scripts/paintings.mjs.",
+  "war-and-peace": { "met": 435908, "focus": [0.5, 0.5] },
+  "twenty-thousand-leagues-under-the-seas": { "met": 45434, "focus": [0.24, 0.5] },
+  "moby-dick": { "met": 437854, "focus": [0.45, 0.5] },
+  "frankenstein": { "met": 438417, "focus": [0.42, 0.4] },
+  "dracula": { "met": 441769, "focus": [0.6, 0.35] },
+  "wuthering-heights": { "met": 437980, "focus": [0.55, 0.4] },
+  "the-awakening": { "met": 436947, "focus": [0.6, 0.4] },
+  "vanity-fair": { "met": 436838, "focus": [0.7, 0.35] },
+  "the-portrait-of-a-lady": { "met": 436896, "focus": [0.4, 0.35] },
+  "madame-bovary": { "met": 436121, "focus": [0.55, 0.4] },
+  "the-phantom-of-the-opera": { "met": 438817, "focus": [0.6, 0.5] },
+  "the-lost-world": { "met": 10481, "focus": [0.5, 0.5] },
+  "the-iliad": { "met": 337058, "focus": [0.5, 0.45] },
+  "the-republic": { "met": 436105, "focus": [0.5, 0.45] },
+  "little-women": { "met": 459123, "focus": [0.5, 0.35] }
+}

@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://unpkg.com/book-wall/schema/books.v1.json",
+  "title": "book-wall library, version 1",
+  "description": "Written by `book-wall import`, read by <book-wall>. See docs/format.md.",
+  "type": "object",
+  "required": ["version", "books"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "const": 1 },
+    "aliases": {
+      "description": "Preferred names, applied on every import. Keys match loosely: case, accents, punctuation and, for series, a leading article are ignored.",
+      "type": "object",
+      "properties": {
+        "series": { "$ref": "#/$defs/names" },
+        "authors": { "$ref": "#/$defs/names" }
+      },
+      "additionalProperties": false
+    },
+    "books": { "type": "array", "items": { "$ref": "#/$defs/entry" } }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "names": {
+      "type": "object",
+      "additionalProperties": { "type": "string", "minLength": 1 }
+    },
+    "text": {
+      "description": "A string, or one string per language: { \"en\": \"…\", \"fr\": \"…\" }.",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "object", "additionalProperties": { "type": "string" }, "minProperties": 1 }
+      ]
+    },
+    "fields": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$", "description": "Stable slug. Names the cover files." },
+        "goodreads": { "type": "string", "description": "Goodreads' Book Id: what a re-import matches on." },
+        "title": { "type": "string", "minLength": 1 },
+        "author": { "type": "string" },
+        "read": { "type": "string", "pattern": "^\\d{4}(-\\d{2}(-\\d{2})?)?$", "description": "Date read. Orders the wall." },
+        "status": { "const": "reading", "description": "On the nightstand, the first shelf." },
+        "series": { "type": "string" },
+        "volume": { "type": "number", "minimum": 0 },
+        "pages": { "type": "integer", "minimum": 1, "description": "Sets the book's thickness." },
+        "rating": { "type": "number", "minimum": 0, "maximum": 5 },
+        "isbn": { "type": "string", "pattern": "^\\d{13}$", "description": "ISBN-13. Prints a real EAN-13 on the back." },
+        "binding": { "type": "string", "description": "Hardcover, Paperback, Mass Market Paperback…: sets the build." },
+        "cover": { "type": "string", "description": "Cover image pinned by hand: a URL, or a path relative to books.json." },
+        "tone": { "enum": ["bone", "sage", "moss", "clay", "ochre", "ink", "oxblood", "slate", "mist"] },
+        "layout": { "enum": ["classic", "band", "frame"] },
+        "quote": { "type": "string", "description": "One line, set large on the back." },
+        "note": { "$ref": "#/$defs/text" },
+        "hidden": { "type": "boolean", "description": "Drops the entry from the wall." },
+        "coverTitle": { "type": "string", "description": "Title to search covers by, for another edition." }
+      }
+    },
+    "override": {
+      "description": "Hand corrections laid over what the source says, kept across re-imports. null removes a field.",
+      "type": "object",
+      "propertyNames": {
+        "enum": ["title", "author", "read", "status", "series", "volume", "pages", "rating", "isbn", "binding", "cover", "tone", "layout", "quote", "note", "hidden", "coverTitle"]
+      },
+      "additionalProperties": {
+        "anyOf": [{ "type": "null" }, { "type": "string" }, { "type": "number" }, { "type": "boolean" }, { "type": "object" }]
+      }
+    },
+    "entry": {
+      "allOf": [{ "$ref": "#/$defs/fields" }],
+      "type": "object",
+      "required": ["id", "title", "author"],
+      "properties": { "override": { "$ref": "#/$defs/override" } }
+    }
+  }
+}
