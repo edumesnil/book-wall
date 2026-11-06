@@ -23,22 +23,28 @@
         font-display: swap;
       }
       /* The theme is set on the page, not the element: the --bw-* properties
-         inherit like any other. */
+         inherit like any other. The settings panel (main.ts) overrides them. */
       :root {
         --bw-canvas: #15140f;
         --bw-fg: #ece6da;
         --bw-accent: #c2a878;
+        --demo-accent-default: #c2a878;
         --bw-font-display: "Instrument Serif", ui-serif, Georgia, serif;
         --bw-font-body: "IBM Plex Mono", ui-monospace, Menlo, monospace;
         /* Instrument Serif has a single weight: no faux bold. */
         --bw-display-weight: 400;
         --bw-rating-shape: star;
-        --demo-ui: color-mix(in srgb, var(--bw-fg) 55%, transparent);
+        --demo-muted: color-mix(in srgb, var(--bw-fg) 55%, transparent);
+        --demo-line: color-mix(in srgb, var(--bw-fg) 12%, transparent);
+        --demo-surface: color-mix(in oklab, var(--bw-canvas) 88%, var(--bw-fg));
+        --demo-ease: cubic-bezier(0.23, 1, 0.32, 1);
       }
       :root[data-theme="light"] {
         --bw-canvas: #f4efe4;
         --bw-fg: #201d17;
         --bw-accent: #7a5f2e;
+        --demo-accent-default: #7a5f2e;
+        --demo-surface: color-mix(in oklab, var(--bw-canvas) 55%, white);
       }
       html,
       body {
@@ -54,44 +60,236 @@
         inset: 0;
         height: auto;
       }
-      /* On the footer's baseline, opposite the hint. Hidden while a book is
-         open: the reader has its own chrome. */
+
+      /* ── The demo's own chrome: a link and the settings, on the footer's
+         baseline, opposite the hint. Hidden while a book is open. ── */
       .demo-bar {
         position: fixed;
-        bottom: 24px;
-        right: 24px;
-        z-index: 1;
+        bottom: 18px;
+        right: 18px;
+        z-index: 2;
         display: flex;
-        gap: 20px;
+        align-items: center;
+        gap: 8px;
         font: 12px/1 var(--bw-font-body);
-        transition: opacity 300ms cubic-bezier(0.23, 1, 0.32, 1);
+        transition: opacity 300ms var(--demo-ease);
       }
       .demo-bar[data-hidden] {
         opacity: 0;
         pointer-events: none;
       }
-      .demo-bar a,
-      .demo-bar button {
-        font: inherit;
+      .demo-bar a {
         color: var(--bw-accent);
-        background: none;
-        border: 0;
-        padding: 0;
-        cursor: pointer;
         text-decoration: none;
+        padding: 6px 8px;
         transition: color 150ms;
       }
-      .demo-bar a:hover,
-      .demo-bar button:hover {
+      .demo-bar a:hover {
         color: var(--bw-fg);
       }
-      .demo-bar span {
-        color: var(--demo-ui);
+      .demo-gear {
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border: 1px solid var(--demo-line);
+        border-radius: 999px;
+        background: var(--demo-surface);
+        color: var(--bw-fg);
+        cursor: pointer;
+        transition:
+          border-color 150ms,
+          transform 200ms var(--demo-ease);
+      }
+      .demo-gear:hover {
+        border-color: color-mix(in srgb, var(--bw-fg) 30%, transparent);
+      }
+      .demo-gear:active {
+        transform: scale(0.94);
+      }
+      .demo-gear[aria-expanded="true"] {
+        border-color: var(--bw-accent);
+      }
+      .demo-gear svg {
+        width: 15px;
+        height: 15px;
+      }
+      :focus-visible {
+        outline: 2px solid var(--bw-accent);
+        outline-offset: 2px;
+      }
+
+      /* The panel. */
+      .demo-panel {
+        position: fixed;
+        right: 18px;
+        bottom: 60px;
+        z-index: 2;
+        width: min(320px, calc(100vw - 36px));
+        max-height: calc(100svh - 84px);
+        overflow-y: auto;
+        box-sizing: border-box;
+        padding: 16px;
+        border: 1px solid var(--demo-line);
+        border-radius: 14px;
+        background: var(--demo-surface);
+        color: var(--bw-fg);
+        font: 12px/1.4 var(--bw-font-body);
+        box-shadow:
+          0 1px 2px rgb(0 0 0 / 0.12),
+          0 16px 40px -12px rgb(0 0 0 / 0.45);
+        transform-origin: bottom right;
+        transition:
+          opacity 180ms var(--demo-ease),
+          transform 180ms var(--demo-ease);
+      }
+      .demo-panel[hidden] {
+        display: block;
+        opacity: 0;
+        transform: translateY(6px) scale(0.98);
+        pointer-events: none;
+        visibility: hidden;
+      }
+      .demo-panel h2 {
+        margin: 0 0 14px;
+        font: 400 20px/1.1 var(--bw-font-display);
+        font-variation-settings: var(--bw-font-display-settings, normal);
+      }
+      .demo-row {
+        display: grid;
+        gap: 6px;
+        margin: 0 0 12px;
+        padding: 0;
+        border: 0;
+      }
+      .demo-row > legend,
+      .demo-row > label {
+        padding: 0;
+        margin-bottom: 6px;
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--demo-muted);
+      }
+      /* A segmented control: radio inputs, one row of pills. */
+      .demo-seg {
+        display: flex;
+        padding: 2px;
+        border-radius: 9px;
+        background: color-mix(in srgb, var(--bw-fg) 7%, transparent);
+      }
+      .demo-seg label {
+        flex: 1;
+        position: relative;
+        text-align: center;
+        cursor: pointer;
+      }
+      .demo-seg input {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        margin: 0;
+        cursor: pointer;
+      }
+      .demo-seg span {
+        display: block;
+        padding: 6px 4px;
+        border-radius: 7px;
+        color: var(--demo-muted);
+        white-space: nowrap;
+        transition:
+          background-color 150ms,
+          color 150ms;
+      }
+      .demo-seg input:checked + span {
+        background: var(--bw-canvas);
+        color: var(--bw-fg);
+        box-shadow: 0 1px 2px rgb(0 0 0 / 0.18);
+      }
+      .demo-seg input:focus-visible + span {
+        outline: 2px solid var(--bw-accent);
+        outline-offset: -2px;
+      }
+      .demo-seg label:hover span {
+        color: var(--bw-fg);
+      }
+      .demo-accent {
+        display: flex;
+        gap: 6px;
+      }
+      .demo-accent button {
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        border: 0;
+        border-radius: 999px;
+        background: var(--c);
+        cursor: pointer;
+        box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.15);
+      }
+      .demo-accent button[aria-pressed="true"] {
+        box-shadow:
+          0 0 0 2px var(--demo-surface),
+          0 0 0 4px var(--c);
+      }
+      .demo-accent label {
+        position: relative;
+        width: 24px;
+        height: 24px;
+        border-radius: 999px;
+        background: conic-gradient(#e5484d, #f5a524, #46a758, #0090ff, #8e4ec6, #e5484d);
+        cursor: pointer;
+      }
+      .demo-accent input {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+      }
+      .demo-code {
+        position: relative;
+        margin: 4px 0 0;
+        padding: 10px 12px;
+        border-radius: 9px;
+        background: color-mix(in srgb, var(--bw-fg) 7%, transparent);
+        font: 11px/1.5 var(--bw-font-body);
+        white-space: pre;
+        overflow-x: auto;
+        color: color-mix(in srgb, var(--bw-fg) 85%, transparent);
+      }
+      .demo-foot {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .demo-foot button {
+        padding: 6px 10px;
+        border: 1px solid var(--demo-line);
+        border-radius: 7px;
+        background: none;
+        color: var(--bw-fg);
+        font: inherit;
+        cursor: pointer;
+      }
+      .demo-foot button:hover {
+        border-color: color-mix(in srgb, var(--bw-fg) 30%, transparent);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .demo-panel,
+        .demo-gear {
+          transition-duration: 0ms;
+        }
       }
       @media (min-width: 768px) {
         .demo-bar {
-          bottom: 32px;
-          right: 40px;
+          bottom: 24px;
+          right: 32px;
+        }
+        .demo-panel {
+          right: 32px;
+          bottom: 68px;
         }
       }
     </style>
@@ -99,10 +297,16 @@
   </head>
   <body>
     <book-wall src="./books.json" covers="./covers/" heading="Library"></book-wall>
+    <div class="demo-panel" id="demo-panel" role="dialog" aria-label="Demo settings" hidden></div>
     <nav class="demo-bar" aria-label="Demo">
-      <button type="button" data-toggle="lang">Français</button>
-      <button type="button" data-toggle="theme">Light</button>
       <a href="https://github.com/edumesnil/book-wall">GitHub ↗</a>
+      <button class="demo-gear" type="button" aria-expanded="false" aria-controls="demo-panel" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true">
+          <path d="M4 7h10M18 7h2M4 17h4M12 17h8" />
+          <circle cx="16" cy="7" r="2" />
+          <circle cx="10" cy="17" r="2" />
+        </svg>
+      </button>
     </nav>
   </body>
 </html>

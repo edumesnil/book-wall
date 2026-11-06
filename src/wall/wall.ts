@@ -41,11 +41,12 @@ const BUDGET = 6;
 export const STILL = 80;
 
 export type Cam = { x: number; y: number };
+export type FocusStyle = "ring" | "frame" | "handles";
 
 export interface WallOptions {
   labels: Labels;
-  /** Selection handles on the focus frame instead of a plain hairline. */
-  handles: boolean;
+  /** How a book focused from the keyboard is marked. */
+  focus: FocusStyle;
   onOpen: (i: number, j: number) => void;
   /** Should this keydown pan the wall? (Focus is in the element, or it fills the page.) */
   ownsKey: (e: KeyboardEvent) => boolean;
@@ -71,6 +72,12 @@ export class Wall {
   private queue: [number, number][] = [];
   private mountRaf = 0;
   private hiddenKey: string | null = null;
+  /**
+   * The wall's one tab stop (roving focus): the last book that had focus, or
+   * the one nearest the middle. Every other book is tabindex -1, so Tab
+   * leaves the wall in one press, and the arrow keys move between books.
+   */
+  private current: string | null = null;
   private open = false;
   private teardown: (() => void) | null = null;
 
@@ -131,6 +138,7 @@ export class Wall {
     this.cells.clear();
     this.rows.clear();
     this.range = null;
+    this.current = null;
     this.queue = [];
     this.install();
   }
@@ -236,8 +244,11 @@ export class Wall {
       jumped = true;
       const px = this.n * this.m.cw;
       const py = this.n * this.m.rh;
-      const kx = Math.round(c.x / px) * px;
-      const ky = Math.round(c.y / py) * py;
+      // Whole periods, counted, not divided back out of pixels (cw isn't an integer).
+      const nx = Math.round(c.x / px);
+      const ny = Math.round(c.y / py);
+      const kx = nx * px;
+      const ky = ny * py;
       c.x -= kx;
       c.y -= ky;
       if (this.tween) {
@@ -247,6 +258,7 @@ export class Wall {
         this.tween.ty -= ky;
       }
       this.setScroll(c.x, c.y);
+      this.shiftFocused(nx * this.n, ny * this.n);
     }
     const m = this.m;
     // The cells the viewport needs (one row extra above: the 3D lean shows it).
@@ -315,6 +327,19 @@ export class Wall {
       const step = ({ ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] } as Record<string, number[]>)[e.key];
       if (!step) return;
       e.preventDefault();
+      // On a book: focus moves to the next one (same column on the shelf above
+      // or below), and the camera follows only when it nears the edge. The
+      // wall is infinite, so the neighbour always exists; it is mounted first
+      // if it isn't yet.
+      const from = (e.composedPath()[0] as Element | undefined)?.closest?.<HTMLElement>(".lib-slot");
+      if (from && this.world.contains(from)) {
+        const i = Number(from.dataset.i) + step[0]!;
+        const j = Number(from.dataset.j) + step[1]!;
+        if (!this.cells.has(`${i}:${j}`)) this.mount(i, j);
+        this.slot(i, j)?.focus({ preventScroll: true });
+        return;
+      }
+      // Anywhere else in the wall: pan.
       const base = this.target();
       this.tweenTo(base.x + step[0]! * this.m.cw * 2, base.y + step[1]! * this.m.rh);
     };
@@ -371,9 +396,11 @@ export class Wall {
       }
       for (const el of row) Object.assign(el.style, { left, width });
     }
+    const active = (this.el.getRootNode() as ShadowRoot | Document).activeElement;
     for (const [key, el] of this.cells) {
       const [i, j] = key.split(":").map(Number) as [number, number];
-      if (i < r.i0 || i > r.i1 || j < r.j0 || j > r.j1) {
+      // The focused book stays, even out of range: removing it drops focus.
+      if ((i < r.i0 || i > r.i1 || j < r.j0 || j > r.j1) && !(active && el.contains(active))) {
         el.remove();
         this.cells.delete(key);
       }
@@ -383,6 +410,7 @@ export class Wall {
       for (let i = r.i0; i <= r.i1; i++) if (!this.cells.has(`${i}:${j}`)) want.push([i, j]);
     if (sync) {
       for (const [i, j] of want) this.mount(i, j);
+      this.keepTabStop();
       return;
     }
     // Nearest the middle of the viewport first.
@@ -402,7 +430,56 @@ export class Wall {
       if (r && i >= r.i0 && i <= r.i1 && j >= r.j0 && j <= r.j1 && !this.cells.has(`${i}:${j}`)) this.mount(i, j);
     }
     if (this.queue.length) this.mountRaf = requestAnimationFrame(this.flush);
+    else this.keepTabStop();
   };
+
+  /**
+   * A recentre moves the camera by whole periods (di columns, dj rows), and
+   * every other cell is remounted in the new frame. The focused cell is kept
+   * mounted, so it moves with them: same book, new coordinates, focus intact.
+   */
+  private shiftFocused(di: number, dj: number) {
+    const active = (this.el.getRootNode() as ShadowRoot | Document).activeElement;
+    for (const [key, cell] of this.cells) {
+      if (!active || !cell.contains(active)) continue;
+      const [i, j] = key.split(":").map(Number) as [number, number];
+      const ni = i - di;
+      const nj = j - dj;
+      const nk = `${ni}:${nj}`;
+      this.cells.delete(key);
+      this.cells.get(nk)?.remove();
+      this.cells.set(nk, cell);
+      Object.assign(cell.style, { left: `${this.cellX(ni)}px`, top: `${this.cellY(nj)}px` });
+      const slot = cell.querySelector<HTMLElement>(".lib-slot")!;
+      slot.dataset.i = String(ni);
+      slot.dataset.j = String(nj);
+      if (this.current === key) this.current = nk;
+      return;
+    }
+  }
+
+  /** Moves the tab stop to this book. */
+  private setCurrent(key: string) {
+    if (key === this.current) return;
+    this.cells.get(this.current ?? "")?.querySelector(".lib-slot")?.setAttribute("tabindex", "-1");
+    this.current = key;
+    this.cells.get(key)?.querySelector(".lib-slot")?.setAttribute("tabindex", "0");
+  }
+
+  /** The tab stop scrolled away: the book nearest the middle takes it. */
+  private keepTabStop() {
+    if (this.current && this.cells.has(this.current)) return;
+    const cx = this.cam.x + this.vw / 2;
+    const cy = this.cam.y + this.vh / 2;
+    let best: string | null = null;
+    let bd = Infinity;
+    for (const key of this.cells.keys()) {
+      const [i, j] = key.split(":").map(Number) as [number, number];
+      const dd = Math.hypot(this.cellX(i) + this.m.cw / 2 - cx, this.cellY(j) + this.m.rh / 2 - cy);
+      if (dd < bd) [bd, best] = [dd, key];
+    }
+    if (best) this.setCurrent(best);
+  }
 
   /** One place on the wall: a stretch of ledge, a book standing on it, maybe a label. */
   private mount(i: number, j: number) {
@@ -421,13 +498,24 @@ export class Wall {
     const overlay = h(
       "span.bw-overlay",
       null,
-      h("span.bw-focus", null, ...(this.o.handles ? HANDLES.map((p) => h(`span.bw-handle.bw-${p}`)) : [])),
+      h(
+        `span.bw-focus.bw-focus-${this.o.focus}`,
+        { part: "focus" },
+        ...(this.o.focus === "handles" ? HANDLES.map((p) => h(`span.bw-handle.bw-${p}`)) : []),
+      ),
       // No backdrop-filter: on a hundred books it is a hundred offscreen passes.
       h("span.bw-open-tag", null, this.o.labels.open),
     );
     const slot = h(
       `button.lib-slot.lib-3d${this.hiddenKey === key ? ".bw-hidden" : ""}`,
-      { type: "button", "aria-label": `${b.title} — ${b.author}`, "data-i": i, "data-j": j, style: vars },
+      {
+        type: "button",
+        tabindex: this.current === key ? 0 : -1,
+        "aria-label": `${b.title} — ${b.author}`,
+        "data-i": i,
+        "data-j": j,
+        style: vars,
+      },
       h("span.lib-cast", { "aria-hidden": "true" }),
       h("span.lib-lean.lib-3d", null, bookBox(this.d, b, { overlay })),
     );
@@ -470,6 +558,7 @@ export class Wall {
       const s = slotOf(e.target);
       if (!s) return;
       const [i, j] = at(s);
+      this.setCurrent(`${i}:${j}`);
       this.o.onCaption(this.bookAt(i, j));
       // Tabbing onto a book near the edge brings it to the middle. Keyboard
       // focus only: a click focuses the button too, and a recentre started on

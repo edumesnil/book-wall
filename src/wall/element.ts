@@ -6,7 +6,10 @@
 //   lang      language for labels and notes; defaults to the page's
 //   theme     "light" | "dark"; defaults to the visitor's system setting
 //   heading   the frosted title in the corner; none if absent
-//   handles   draws selection handles on the focus frame
+//   focus     how a book focused from the keyboard is marked: "ring" (default),
+//             "frame" (a hairline on the cover's edge) or "handles" (the frame
+//             with selection handles)
+//   handles   same as focus="handles" (kept from 0.1)
 //
 // Styling: the --bw-* custom properties and ::part()s listed at the top of
 // wall.css, set on the element or any ancestor.
@@ -25,7 +28,7 @@ import { prepare, type Book, type Covers, type Library, type Shelfed } from "./d
 import { h, s } from "./dom.js";
 import { labelsFor, type Labels } from "./labels.js";
 import { Reader } from "./reader.js";
-import { Wall } from "./wall.js";
+import { Wall, type FocusStyle } from "./wall.js";
 
 let sheet: CSSStyleSheet | null = null;
 const styles = () => {
@@ -38,7 +41,7 @@ const styles = () => {
 let uid = 0;
 
 export class BookWall extends HTMLElement {
-  static observedAttributes = ["src", "covers", "lang", "theme", "heading", "handles"];
+  static observedAttributes = ["src", "covers", "lang", "theme", "heading", "focus", "handles"];
 
   private readonly root: ShadowRoot;
   private _library: Library | null = null;
@@ -192,7 +195,7 @@ export class BookWall extends HTMLElement {
 
     const wall = new Wall(d, {
       labels: l,
-      handles: this.hasAttribute("handles"),
+      focus: this.focusStyle(),
       onOpen: (i, j) => this.openAt(i, j, 0),
       ownsKey: this.ownsKey,
       onCaption: (b) => {
@@ -228,6 +231,12 @@ export class BookWall extends HTMLElement {
     }
   }
 
+  private focusStyle(): FocusStyle {
+    const f = this.getAttribute("focus");
+    if (f === "ring" || f === "frame" || f === "handles") return f;
+    return this.hasAttribute("handles") ? "handles" : "ring";
+  }
+
   /** Arrow keys pan the wall when focus is inside it, or when it fills the view. */
   private ownsKey = (e: KeyboardEvent) => {
     if (e.composedPath().includes(this)) {
@@ -258,7 +267,7 @@ export class BookWall extends HTMLElement {
           return o ? (wall.slot(o.i, o.j)?.querySelector(".book-front") ?? null) : null;
         },
         onStep: (dd) => this.step(dd),
-        onClosed: () => this.closed(),
+        onClosed: (via) => this.closed(via),
       });
       this.root.append(this.reader.el);
       this.emit("book-wall:open", book);
@@ -275,7 +284,7 @@ export class BookWall extends HTMLElement {
     this.openAt(o.i + dd, o.j, dd);
   }
 
-  private closed() {
+  private closed(via: "pointer" | "keyboard") {
     const o = this.open;
     const book = o && this.wall ? this.wall.bookAt(o.i, o.j) : null;
     this.reader?.destroy();
@@ -283,8 +292,29 @@ export class BookWall extends HTMLElement {
     this.open = null;
     this.wall?.setOpen(false);
     this.wall?.setHidden(null);
-    if (o) requestAnimationFrame(() => this.wall?.slot(o.i, o.j)?.focus({ preventScroll: true }));
+    if (o) requestAnimationFrame(() => this.restoreFocus(this.wall?.slot(o.i, o.j) ?? null, via));
     if (book) this.emit("book-wall:close", book);
+  }
+
+  /**
+   * Focus goes back to the book that was open. Closed from the keyboard
+   * (Esc), it shows the focus mark at once; closed with a pointer, it doesn't
+   * until a key is pressed, the way browsers treat focus after a click.
+   */
+  private restoreFocus(slot: HTMLButtonElement | null, via: "pointer" | "keyboard") {
+    if (!slot) return;
+    const quiet = via === "pointer";
+    if (quiet) {
+      slot.dataset.quiet = "";
+      const wake = () => {
+        delete slot.dataset.quiet;
+        slot.removeEventListener("keydown", wake);
+        slot.removeEventListener("blur", wake);
+      };
+      slot.addEventListener("keydown", wake);
+      slot.addEventListener("blur", wake);
+    }
+    slot.focus({ preventScroll: true, focusVisible: !quiet } as FocusOptions);
   }
 
   private emit(type: string, book: Book) {

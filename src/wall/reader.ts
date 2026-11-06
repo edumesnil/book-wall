@@ -27,7 +27,8 @@ export interface ReaderOptions {
   /** The book's cover on the wall, to fly from and back to. */
   from: () => Element | null;
   onStep: (d: 1 | -1) => void;
-  onClosed: () => void;
+  /** `keyboard` when Esc (or Close, from the keyboard) put the book back. */
+  onClosed: (via: "pointer" | "keyboard") => void;
 }
 
 type Drag = { px: number; py: number; vx: number; vy: number; t: number; ax: number; ay: number; raf: number };
@@ -98,8 +99,10 @@ export class Reader {
       this.closeBtn,
     );
 
-    this.backdrop.addEventListener("click", this.close);
-    this.closeBtn.addEventListener("click", this.close);
+    // A click with no pointer (Enter or Space on Close) counts as the keyboard.
+    const byClick = (e: MouseEvent) => this.close(e.detail === 0 ? "keyboard" : "pointer");
+    this.backdrop.addEventListener("click", byClick);
+    this.closeBtn.addEventListener("click", byClick);
     this.flipBtn.addEventListener("click", this.flip);
     // The grab is on the stage, never transformed: see .bw-stage.
     this.stage.addEventListener("pointerdown", this.onGrab);
@@ -285,7 +288,7 @@ export class Reader {
     this.turn(nx, ny);
   };
 
-  close = () => {
+  close = (via: "pointer" | "keyboard" = "pointer") => {
     if (this.closing) return;
     this.closing = true;
     this.el.classList.add("bw-closing");
@@ -293,7 +296,7 @@ export class Reader {
     cancelAnimationFrame(this.coast);
     this.turn(Math.round(this.rot.x / 360) * 360, Math.round(this.rot.y / 360) * 360, 380);
     const el = this.fly;
-    const done = () => this.o.onClosed();
+    const done = () => this.o.onClosed(via);
     // Reduced motion: no flight back, but a fade rather than a pop.
     if (reduced()) {
       el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, easing: EASE_OUT, fill: "forwards" }).finished.then(done, done);
@@ -459,7 +462,7 @@ export class Reader {
     const onKey = (e: KeyboardEvent) => {
       // While the book flies back, keys would swap in another book under it.
       if (this.closing || e.metaKey || e.ctrlKey || e.altKey) return;
-      if (e.key === "Escape") this.close();
+      if (e.key === "Escape") this.close("keyboard");
       else if (e.key === "ArrowRight") this.o.onStep(1);
       else if (e.key === "ArrowLeft") this.o.onStep(-1);
       else if (e.key.toLowerCase() === "f") this.flip();
