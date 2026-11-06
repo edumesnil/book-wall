@@ -6,7 +6,10 @@
 //   lang      language for labels and notes; defaults to the page's
 //   theme     "light" | "dark"; defaults to the visitor's system setting
 //   heading   the frosted title in the corner; none if absent
-//   handles   draws selection handles on the focus frame
+//   focus     how a book focused from the keyboard is marked: "ring" (default),
+//             "frame" (a hairline on the cover's edge) or "handles" (the frame
+//             with selection handles)
+//   handles   same as focus="handles" (kept from 0.1)
 //
 // Styling: the --bw-* custom properties and ::part()s listed at the top of
 // wall.css, set on the element or any ancestor.
@@ -25,7 +28,7 @@ import { prepare, type Book, type Covers, type Library, type Shelfed } from "./d
 import { h, s } from "./dom.js";
 import { labelsFor, type Labels } from "./labels.js";
 import { Reader } from "./reader.js";
-import { Wall } from "./wall.js";
+import { Wall, type FocusStyle } from "./wall.js";
 
 let sheet: CSSStyleSheet | null = null;
 const styles = () => {
@@ -38,7 +41,7 @@ const styles = () => {
 let uid = 0;
 
 export class BookWall extends HTMLElement {
-  static observedAttributes = ["src", "covers", "lang", "theme", "heading", "handles"];
+  static observedAttributes = ["src", "covers", "lang", "theme", "heading", "focus", "handles"];
 
   private readonly root: ShadowRoot;
   private _library: Library | null = null;
@@ -194,7 +197,7 @@ export class BookWall extends HTMLElement {
 
     const wall = new Wall(d, {
       labels: l,
-      handles: this.hasAttribute("handles"),
+      focus: this.focusStyle(),
       onOpen: (i, j, via) => {
         this.openedBy = via;
         this.openAt(i, j, 0);
@@ -231,6 +234,12 @@ export class BookWall extends HTMLElement {
       this.built = true;
       this.preloadTimer = window.setTimeout(() => this.wall?.preload(), 300);
     }
+  }
+
+  private focusStyle(): FocusStyle {
+    const f = this.getAttribute("focus");
+    if (f === "ring" || f === "frame" || f === "handles") return f;
+    return this.hasAttribute("handles") ? "handles" : "ring";
   }
 
   /** Arrow keys pan the wall when focus is inside it, or when it fills the view. */

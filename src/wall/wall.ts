@@ -41,11 +41,12 @@ const BUDGET = 6;
 export const STILL = 80;
 
 export type Cam = { x: number; y: number };
+export type FocusStyle = "ring" | "frame" | "handles";
 
 export interface WallOptions {
   labels: Labels;
-  /** Selection handles on the focus frame instead of a plain hairline. */
-  handles: boolean;
+  /** How a book focused from the keyboard is marked. */
+  focus: FocusStyle;
   /** `keyboard` when the click came from Enter or Space (a click with no pointer). */
   onOpen: (i: number, j: number, via: "pointer" | "keyboard") => void;
   /** Should this keydown pan the wall? (Focus is in the element, or it fills the page.) */
@@ -469,7 +470,11 @@ export class Wall {
     const overlay = h(
       "span.bw-overlay",
       null,
-      h("span.bw-focus", null, ...(this.o.handles ? HANDLES.map((p) => h(`span.bw-handle.bw-${p}`)) : [])),
+      h(
+        `span.bw-focus.bw-focus-${this.o.focus}`,
+        { part: "focus" },
+        ...(this.o.focus === "handles" ? HANDLES.map((p) => h(`span.bw-handle.bw-${p}`)) : []),
+      ),
       // No backdrop-filter: on a hundred books it is a hundred offscreen passes.
       h("span.bw-open-tag", null, this.o.labels.open),
     );

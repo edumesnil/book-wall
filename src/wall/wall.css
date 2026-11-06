@@ -15,10 +15,12 @@
      --bw-rating-shape                         the rating marks: star, or a mask image
                                                (url(…) of an SVG); squares if unset
      --bw-ease-out --bw-ease-in-out            the two motion curves
+     --bw-focus-color --bw-focus-width         the keyboard focus ring (focus="ring"):
+     --bw-focus-offset --bw-focus-radius       colour, thickness, gap to the cover, corners
      --bw-cursor                               every cursor at once (none, for a page that
                                                draws its own), or one by one:
      --bw-cursor-pointer --bw-cursor-grab --bw-cursor-grabbing
-   Parts, for ::part(): wall, header, heading, footer, reader, rating, rating-box.
+   Parts, for ::part(): wall, header, heading, footer, reader, rating, rating-box, focus.
    Book tones are physical objects: they stay the same in both themes; the
    wall, the shelves and their shadows follow it. */
 
@@ -55,6 +57,10 @@
   --_ease-in-out: var(--bw-ease-in-out, cubic-bezier(0.77, 0, 0.175, 1));
   /* A page that draws its own cursor sets --bw-cursor: none (or each one):
      a document-level cursor rule can't reach into the shadow root. */
+  --_focus-color: var(--bw-focus-color, var(--_accent));
+  --_focus-width: var(--bw-focus-width, 2px);
+  --_focus-offset: var(--bw-focus-offset, 4px);
+  --_focus-radius: var(--bw-focus-radius, 4px);
   --_cursor-pointer: var(--bw-cursor-pointer, var(--bw-cursor, pointer));
   --_cursor-grab: var(--bw-cursor-grab, var(--bw-cursor, grab));
   --_cursor-grabbing: var(--bw-cursor-grabbing, var(--bw-cursor, grabbing));
@@ -682,19 +688,31 @@ button {
   position: absolute;
   inset: 0;
 }
+/* Keyboard focus, three styles (the focus attribute): ring, a rounded outline
+   standing off the cover; frame, a hairline on its edge; handles, the frame
+   with the eight squares of a selection in a design tool. */
 .bw-focus {
   position: absolute;
-  inset: 0;
-  border: 1px solid color-mix(in srgb, var(--_accent) 70%, transparent);
+  pointer-events: none;
   opacity: 0;
   transition: opacity 200ms;
+}
+.bw-focus-ring {
+  inset: calc(-1 * (var(--_focus-offset) + var(--_focus-width)));
+  border: var(--_focus-width) solid var(--_focus-color);
+  border-radius: var(--_focus-radius);
+}
+.bw-focus-frame,
+.bw-focus-handles {
+  inset: 0;
+  border: 1px solid color-mix(in srgb, var(--_focus-color) 70%, transparent);
 }
 .bw-handle {
   position: absolute;
   display: block;
   width: 7px;
   height: 7px;
-  border: 1px solid var(--_accent);
+  border: 1px solid var(--_focus-color);
   background: var(--_canvas);
 }
 .lib-slot:focus-visible:not([data-quiet]) .bw-focus {

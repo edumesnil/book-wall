@@ -10,7 +10,8 @@ if (q.has("local")) {
   wall.setAttribute("src", "./local/books.json");
   wall.setAttribute("covers", "./local/covers/");
 }
-if (q.has("handles")) wall.setAttribute("handles", "");
+const focus = q.get("focus");
+if (focus) wall.setAttribute("focus", focus);
 
 // The demo pins the theme and the language from its own buttons; a site
 // that doesn't set them gets the visitor's system theme and the page's lang.
