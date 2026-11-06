@@ -104,7 +104,7 @@ You download the covers, from your own machine, for your own site. book-wall doe
 ## The element
 
 ```html
-<book-wall src="/books.json" covers="/covers/" heading="Library" lang="fr" theme="dark"></book-wall>
+<book-wall src="/books.json" covers="/covers/" heading="Library" lang="fr" theme="dark" focus-style="ring"></book-wall>
 ```
 
 | Attribute | What it does |
@@ -114,9 +114,9 @@ You download the covers, from your own machine, for your own site. book-wall doe
 | `heading` | The title in the top corner, in frosted glass. No title if you leave it out. |
 | `lang` | The language of the labels and of your notes, when a note has several (`{ "en": "…", "fr": "…" }`). It defaults to the page's `lang`. Labels come in English and French. |
 | `theme` | `light` or `dark`. It defaults to the visitor's system setting. |
-| `focus` | How a book focused with the keyboard is marked. `ring` (the default) draws a rounded outline around it, `frame` a hairline on its edge, `handles` the hairline with the eight squares of a selection in a design tool. Restyle the ring with `--bw-focus-color`, `--bw-focus-width`, `--bw-focus-offset` and `--bw-focus-radius`, or any style with `::part(focus)`. |
+| `focus-style` | How a book focused with the keyboard is marked. `ring` (the default) draws a rounded outline around it, `frame` a hairline on its edge, `handles` the hairline with the eight squares of a selection in a design tool. Restyle the ring with `--bw-focus-color`, `--bw-focus-width`, `--bw-focus-offset` and `--bw-focus-radius`, or any style with `::part(focus)`. |
 
-In JavaScript, `library` and `coverData` take the two JSON objects directly, without a fetch, and `labels` replaces any built-in label.
+In JavaScript, `library` and `coverData` take the two JSON objects directly, without a fetch, `labels` replaces any built-in label, and `focusStyle` mirrors the `focus-style` attribute. In React 19, which passes a JSX prop to a custom element as a property when the element has one, write `focus-style="handles"` or `focusStyle="handles"`. A bare `focus` prop would overwrite the element's `focus()` method.
 
 ```js
 const wall = document.querySelector("book-wall");

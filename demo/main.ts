@@ -97,7 +97,7 @@ function apply() {
   root.lang = s.lang;
   wall.setAttribute("theme", s.theme);
   wall.setAttribute("lang", s.lang);
-  wall.setAttribute("focus", s.focus);
+  wall.setAttribute("focus-style", s.focus);
   if (s.heading === "show") wall.setAttribute("heading", fr ? "Bibliothèque" : "Library");
   else wall.removeAttribute("heading");
   if (s.covers === "images") wall.setAttribute("covers", COVERS);
@@ -200,7 +200,7 @@ function renderCode() {
     s.heading === "show" && `heading="${s.lang === "fr" ? "Bibliothèque" : "Library"}"`,
     `lang="${s.lang}"`,
     `theme="${s.theme}"`,
-    s.focus !== "ring" && `focus="${s.focus}"`,
+    s.focus !== "ring" && `focus-style="${s.focus}"`,
   ].filter(Boolean);
   const css = [
     `--bw-font-display: ${FONTS[s.display]!.family};`,
