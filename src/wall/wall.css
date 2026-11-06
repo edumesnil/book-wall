@@ -15,6 +15,9 @@
      --bw-rating-shape                         the rating marks: star, or a mask image
                                                (url(…) of an SVG); squares if unset
      --bw-ease-out --bw-ease-in-out            the two motion curves
+     --bw-cursor                               every cursor at once (none, for a page that
+                                               draws its own), or one by one:
+     --bw-cursor-pointer --bw-cursor-grab --bw-cursor-grabbing
    Parts, for ::part(): wall, header, heading, footer, reader, rating, rating-box.
    Book tones are physical objects: they stay the same in both themes; the
    wall, the shelves and their shadows follow it. */
@@ -50,6 +53,11 @@
   --_paper-line: var(--bw-paper-line, #cfc6ae);
   --_ease-out: var(--bw-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
   --_ease-in-out: var(--bw-ease-in-out, cubic-bezier(0.77, 0, 0.175, 1));
+  /* A page that draws its own cursor sets --bw-cursor: none (or each one):
+     a document-level cursor rule can't reach into the shadow root. */
+  --_cursor-pointer: var(--bw-cursor-pointer, var(--bw-cursor, pointer));
+  --_cursor-grab: var(--bw-cursor-grab, var(--bw-cursor, grab));
+  --_cursor-grabbing: var(--bw-cursor-grabbing, var(--bw-cursor, grabbing));
   display: block;
   position: relative;
   height: 100svh;
@@ -420,7 +428,7 @@ button {
   transform: translate3d(-16%, -10%, 0);
   transition: transform 700ms var(--_ease-out);
 }
-.lib-slot:focus-visible .lib-sheen {
+.lib-slot:focus-visible:not([data-quiet]) .lib-sheen {
   transform: translate3d(12%, 7%, 0);
 }
 .book-solid .lib-sheen {
@@ -634,7 +642,7 @@ button {
 .lib-slot {
   position: relative;
   display: block;
-  cursor: pointer;
+  cursor: var(--_cursor-pointer);
   outline: none;
 }
 .lib-slot.bw-hidden {
@@ -650,7 +658,7 @@ button {
   transform: translateZ(calc(var(--w) * 0.2)) rotateX(var(--lean, 5deg));
   transition: transform 280ms var(--_ease-out);
 }
-.lib-slot:focus-visible .lib-lean {
+.lib-slot:focus-visible:not([data-quiet]) .lib-lean {
   transform: translateZ(calc(var(--w) * 0.34)) translateY(-6%) rotateX(0deg);
 }
 /* Its shadow on the wall behind, which is what sells the lean. Flat on the
@@ -664,7 +672,7 @@ button {
   background: radial-gradient(closest-side, var(--_shelf-shadow) 55%, transparent);
   transition: opacity 280ms var(--_ease-out);
 }
-.lib-slot:focus-visible .lib-cast {
+.lib-slot:focus-visible:not([data-quiet]) .lib-cast {
   opacity: 0.6;
 }
 
@@ -689,7 +697,7 @@ button {
   border: 1px solid var(--_accent);
   background: var(--_canvas);
 }
-.lib-slot:focus-visible .bw-focus {
+.lib-slot:focus-visible:not([data-quiet]) .bw-focus {
   opacity: 1;
 }
 .bw-open-tag {
@@ -712,7 +720,7 @@ button {
     opacity 300ms var(--_ease-out),
     translate 300ms var(--_ease-out);
 }
-.lib-slot:focus-visible .bw-open-tag {
+.lib-slot:focus-visible:not([data-quiet]) .bw-open-tag {
   opacity: 1;
   translate: -50% 0;
 }
@@ -934,7 +942,7 @@ button {
   top: 24px;
   right: 24px;
   z-index: 10;
-  cursor: pointer;
+  cursor: var(--_cursor-pointer);
   font-size: 12px;
   color: var(--_accent);
   transition:
@@ -1025,11 +1033,11 @@ button {
   --w: min(40cqh, 64cqw, 340px);
   position: relative;
   perspective: 1800px;
-  cursor: grab;
+  cursor: var(--_cursor-grab);
   touch-action: none;
 }
 .bw-stage:active {
-  cursor: grabbing;
+  cursor: var(--_cursor-grabbing);
 }
 /* Outside the book's 3D context: inside it, the shadow is a plane the tilted
    book cuts through, and it shows across the cover. */
@@ -1067,7 +1075,7 @@ button {
   font-size: 12px;
 }
 .bw-flip {
-  cursor: pointer;
+  cursor: var(--_cursor-pointer);
   border-radius: 999px;
   background: var(--_fg);
   color: var(--_canvas);

@@ -126,7 +126,7 @@ wall.addEventListener("book-wall:open", (e) => console.log(e.detail.book.title))
 
 The element fires `book-wall:open` and `book-wall:close` with the book in `event.detail`.
 
-Visitors browse by dragging with the mouse or scrolling, with the momentum of their trackpad or touchscreen. The arrow keys pan the wall when it has focus or fills the page. A click opens a book. Dragging the open book turns it any way you like, and the Flip button or the `F` key shows the back. `←` and `→` move to the next book on the shelf, and `Esc` puts it back. With reduced motion turned on, books fade in and out instead of flying.
+Visitors browse by dragging with the mouse or scrolling, with the momentum of their trackpad or touchscreen. From the keyboard, Tab lands on one book and the arrow keys move to the next one, on the same shelf or the one above or below, with the wall following. Tab again leaves the wall. A click, Enter or Space opens a book. Dragging the open book turns it any way you like, and the Flip button or the `F` key shows the back. `←` and `→` move to the next book on the shelf, and `Esc` puts it back. With reduced motion turned on, books fade in and out instead of flying.
 
 ### Theming
 
@@ -141,13 +141,14 @@ Every colour and font is a CSS custom property. Set them on the element or on an
   --bw-font-body: "IBM Plex Mono", monospace; /* everything else */
   --bw-display-weight: 400; /* for a display face that has one weight */
   --bw-rating-shape: star; /* stars instead of squares, or url() of an SVG */
+  --bw-cursor: none; /* if your page draws its own cursor */
 }
 book-wall[data-theme="light"] {
   --bw-canvas: #f4efe4;
 }
 ```
 
-The element ships with no fonts, so it uses yours. The full list of properties, with the shelf colours, the nine cover tones, paper, inks and motion curves, sits at the top of [`src/wall/wall.css`](src/wall/wall.css). For anything the properties don't reach, style these parts with `::part()`: `wall`, `header`, `heading`, `footer`, `reader`, `rating`, `rating-box`.
+The element ships with no fonts, so it uses yours. The full list of properties, with the shelf colours, the nine cover tones, paper, inks, motion curves and each cursor on its own, sits at the top of [`src/wall/wall.css`](src/wall/wall.css). For anything the properties don't reach, style these parts with `::part()`: `wall`, `header`, `heading`, `footer`, `reader`, `rating`, `rating-box`.
 
 ### Why it stays smooth
 
