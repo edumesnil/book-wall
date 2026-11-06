@@ -105,7 +105,9 @@ function apply() {
   const display = FONTS[s.display]!;
   const set = (k: string, v: string | undefined) => (v ? root.style.setProperty(k, v) : root.style.removeProperty(k));
   set("--bw-font-display", display.family);
-  set("--bw-display-weight", display.weight);
+  // "initial" rather than removing it: index.html sets 400 on :root for
+  // Instrument Serif, and only this lets the element's own weights back.
+  set("--bw-display-weight", display.weight ?? "initial");
   set("--bw-font-body", FONTS[s.body]!.family);
   set("--bw-rating-shape", s.rating === "star" ? "star" : "initial");
   set("--bw-accent", s.accent || undefined);
@@ -149,7 +151,8 @@ function build() {
     const b = el("button", { type: "button", title: a || "Theme default" });
     b.setAttribute("aria-label", a ? `Accent ${a}` : "Theme default accent");
     b.setAttribute("aria-pressed", String(state.accent === a));
-    b.style.setProperty("--c", a || "var(--bw-accent)");
+    // The theme's own accent, not the live --bw-accent, which a pick overrides.
+    b.style.setProperty("--c", a || "var(--demo-accent-default)");
     b.addEventListener("click", () => {
       state = { ...state, accent: a };
       apply();

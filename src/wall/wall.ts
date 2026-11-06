@@ -47,8 +47,7 @@ export interface WallOptions {
   labels: Labels;
   /** How a book focused from the keyboard is marked. */
   focus: FocusStyle;
-  /** `keyboard` when the click came from Enter or Space (a click with no pointer). */
-  onOpen: (i: number, j: number, via: "pointer" | "keyboard") => void;
+  onOpen: (i: number, j: number) => void;
   /** Should this keydown pan the wall? (Focus is in the element, or it fills the page.) */
   ownsKey: (e: KeyboardEvent) => boolean;
   onCaption: (b: Book | null) => void;
@@ -245,8 +244,11 @@ export class Wall {
       jumped = true;
       const px = this.n * this.m.cw;
       const py = this.n * this.m.rh;
-      const kx = Math.round(c.x / px) * px;
-      const ky = Math.round(c.y / py) * py;
+      // Whole periods, counted, not divided back out of pixels (cw isn't an integer).
+      const nx = Math.round(c.x / px);
+      const ny = Math.round(c.y / py);
+      const kx = nx * px;
+      const ky = ny * py;
       c.x -= kx;
       c.y -= ky;
       if (this.tween) {
@@ -256,6 +258,7 @@ export class Wall {
         this.tween.ty -= ky;
       }
       this.setScroll(c.x, c.y);
+      this.shiftFocused(nx * this.n, ny * this.n);
     }
     const m = this.m;
     // The cells the viewport needs (one row extra above: the 3D lean shows it).
@@ -430,6 +433,31 @@ export class Wall {
     else this.keepTabStop();
   };
 
+  /**
+   * A recentre moves the camera by whole periods (di columns, dj rows), and
+   * every other cell is remounted in the new frame. The focused cell is kept
+   * mounted, so it moves with them: same book, new coordinates, focus intact.
+   */
+  private shiftFocused(di: number, dj: number) {
+    const active = (this.el.getRootNode() as ShadowRoot | Document).activeElement;
+    for (const [key, cell] of this.cells) {
+      if (!active || !cell.contains(active)) continue;
+      const [i, j] = key.split(":").map(Number) as [number, number];
+      const ni = i - di;
+      const nj = j - dj;
+      const nk = `${ni}:${nj}`;
+      this.cells.delete(key);
+      this.cells.get(nk)?.remove();
+      this.cells.set(nk, cell);
+      Object.assign(cell.style, { left: `${this.cellX(ni)}px`, top: `${this.cellY(nj)}px` });
+      const slot = cell.querySelector<HTMLElement>(".lib-slot")!;
+      slot.dataset.i = String(ni);
+      slot.dataset.j = String(nj);
+      if (this.current === key) this.current = nk;
+      return;
+    }
+  }
+
   /** Moves the tab stop to this book. */
   private setCurrent(key: string) {
     if (key === this.current) return;
@@ -515,7 +543,7 @@ export class Wall {
     const at = (s: HTMLButtonElement) => [Number(s.dataset.i), Number(s.dataset.j)] as const;
     this.world.addEventListener("click", (e) => {
       const s = slotOf(e.target);
-      if (s) this.o.onOpen(...at(s), e.detail === 0 ? "keyboard" : "pointer");
+      if (s) this.o.onOpen(...at(s));
     });
     // The caption is written straight to the DOM: hovering re-renders nothing.
     this.world.addEventListener("pointerover", (e) => {
