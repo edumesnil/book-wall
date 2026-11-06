@@ -6,10 +6,12 @@
 //   lang      language for labels and notes; defaults to the page's
 //   theme     "light" | "dark"; defaults to the visitor's system setting
 //   heading   the frosted title in the corner; none if absent
-//   focus     how a book focused from the keyboard is marked: "ring" (default),
-//             "frame" (a hairline on the cover's edge) or "handles" (the frame
-//             with selection handles)
-//   handles   same as focus="handles" (kept from 0.1)
+//   focus-style  how a book focused from the keyboard is marked: "ring"
+//             (default), "frame" (a hairline on the cover's edge) or "handles"
+//             (the frame with selection handles). Not `focus`: frameworks such
+//             as React 19 set a JSX prop as a property when one exists, and
+//             `focus` is HTMLElement.focus(). `focus` and `handles` still work
+//             as plain HTML attributes, from 0.2 and 0.1.
 //
 // Styling: the --bw-* custom properties and ::part()s listed at the top of
 // wall.css, set on the element or any ancestor.
@@ -41,7 +43,7 @@ const styles = () => {
 let uid = 0;
 
 export class BookWall extends HTMLElement {
-  static observedAttributes = ["src", "covers", "lang", "theme", "heading", "focus", "handles"];
+  static observedAttributes = ["src", "covers", "lang", "theme", "heading", "focus-style", "focus", "handles"];
 
   private readonly root: ShadowRoot;
   private _library: Library | null = null;
@@ -195,7 +197,7 @@ export class BookWall extends HTMLElement {
 
     const wall = new Wall(d, {
       labels: l,
-      focus: this.focusStyle(),
+      focus: this.focusStyle,
       onOpen: (i, j) => this.openAt(i, j, 0),
       ownsKey: this.ownsKey,
       onCaption: (b) => {
@@ -231,10 +233,16 @@ export class BookWall extends HTMLElement {
     }
   }
 
-  private focusStyle(): FocusStyle {
-    const f = this.getAttribute("focus");
-    if (f === "ring" || f === "frame" || f === "handles") return f;
+  /** The focus-style attribute, as a property (React and friends set this one). */
+  get focusStyle(): FocusStyle {
+    for (const a of ["focus-style", "focus"]) {
+      const f = this.getAttribute(a);
+      if (f === "ring" || f === "frame" || f === "handles") return f;
+    }
     return this.hasAttribute("handles") ? "handles" : "ring";
+  }
+  set focusStyle(v: FocusStyle) {
+    this.setAttribute("focus-style", v);
   }
 
   /** Arrow keys pan the wall when focus is inside it, or when it fills the view. */

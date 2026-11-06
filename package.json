@@ -1,6 +1,6 @@
 {
   "name": "book-wall",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Your Goodreads library as an infinite wall of 3D books. A CLI to import and fetch covers, a custom element to render them.",
   "keywords": [
     "goodreads",
