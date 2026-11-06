@@ -60,8 +60,6 @@ export class BookWall extends HTMLElement {
   private built = false;
   private preloadTimer = 0;
   private builtFor: Shelfed | null = null;
-  /** How the open book was opened: the focus it gives back matches. */
-  private openedBy: "pointer" | "keyboard" = "pointer";
 
   constructor() {
     super();
@@ -198,10 +196,7 @@ export class BookWall extends HTMLElement {
     const wall = new Wall(d, {
       labels: l,
       focus: this.focusStyle(),
-      onOpen: (i, j, via) => {
-        this.openedBy = via;
-        this.openAt(i, j, 0);
-      },
+      onOpen: (i, j) => this.openAt(i, j, 0),
       ownsKey: this.ownsKey,
       onCaption: (b) => {
         const el = this.caption;
@@ -272,7 +267,7 @@ export class BookWall extends HTMLElement {
           return o ? (wall.slot(o.i, o.j)?.querySelector(".book-front") ?? null) : null;
         },
         onStep: (dd) => this.step(dd),
-        onClosed: () => this.closed(),
+        onClosed: (via) => this.closed(via),
       });
       this.root.append(this.reader.el);
       this.emit("book-wall:open", book);
@@ -289,7 +284,7 @@ export class BookWall extends HTMLElement {
     this.openAt(o.i + dd, o.j, dd);
   }
 
-  private closed() {
+  private closed(via: "pointer" | "keyboard") {
     const o = this.open;
     const book = o && this.wall ? this.wall.bookAt(o.i, o.j) : null;
     this.reader?.destroy();
@@ -297,18 +292,18 @@ export class BookWall extends HTMLElement {
     this.open = null;
     this.wall?.setOpen(false);
     this.wall?.setHidden(null);
-    if (o) requestAnimationFrame(() => this.restoreFocus(this.wall?.slot(o.i, o.j) ?? null));
+    if (o) requestAnimationFrame(() => this.restoreFocus(this.wall?.slot(o.i, o.j) ?? null, via));
     if (book) this.emit("book-wall:close", book);
   }
 
   /**
-   * Focus goes back to the book that was open. Opened from the keyboard, it
-   * shows the focus frame; opened with a pointer, it doesn't, even when Esc
-   * closed it (a key press would otherwise make the browser show it).
+   * Focus goes back to the book that was open. Closed from the keyboard
+   * (Esc), it shows the focus mark at once; closed with a pointer, it doesn't
+   * until a key is pressed, the way browsers treat focus after a click.
    */
-  private restoreFocus(slot: HTMLButtonElement | null) {
+  private restoreFocus(slot: HTMLButtonElement | null, via: "pointer" | "keyboard") {
     if (!slot) return;
-    const quiet = this.openedBy === "pointer";
+    const quiet = via === "pointer";
     if (quiet) {
       slot.dataset.quiet = "";
       const wake = () => {
