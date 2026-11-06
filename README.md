@@ -166,7 +166,7 @@ npm install
 npm run dev
 ```
 
-The demo shelves public-domain classics. [demo/CREDITS.md](demo/CREDITS.md) lists where each image and font comes from, with its licence. To try the demo on your own library without committing it, copy your `books.json` and `covers/` into `demo/public/local/`, which git ignores, and open the page with `?local`. The page also reads `?theme=light`, `?lang=fr` and `?focus=frame` or `?focus=handles`.
+The demo shelves public-domain classics. [demo/CREDITS.md](demo/CREDITS.md) lists where each image and font comes from, with its licence. To try the demo on your own library without committing it, copy your `books.json` and `covers/` into `demo/public/local/`, which git ignores, and open the page with `?local`. The settings button in the bottom corner switches the theme, language, focus style, rating marks, covers, title, fonts and accent while you watch, and shows the markup and CSS for what you picked.
 
 ## Development
 
