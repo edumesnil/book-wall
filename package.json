@@ -24,7 +24,7 @@
   },
   "type": "module",
   "bin": {
-    "book-wall": "./dist/cli/index.js"
+    "book-wall": "dist/cli/index.js"
   },
   "main": "./dist/book-wall.js",
   "types": "./dist/types/wall/index.d.ts",
