@@ -113,13 +113,4 @@ export const buildOf = (b: Book) => (b.binding === "Hardcover" ? HARD : PAPERBAC
 /** Each book leans its own amount, so a shelf never looks typeset. */
 export const lean = (b: Book) => 3.5 + (hash(b.id) % 5) * 0.8;
 
-// On the starting shelf books take their real size: the binding sets the
-// width, the cover's own proportions the height.
-const BINDING: Record<string, number> = {
-  Hardcover: 1,
-  Paperback: 0.9,
-  "Mass Market Paperback": 0.78,
-};
-export const scaleOf = (b: Book) => (BINDING[b.binding ?? ""] ?? 0.88) * (0.97 + (hash(b.id) % 7) * 0.01);
-
 export type { Shelf };

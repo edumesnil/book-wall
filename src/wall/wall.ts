@@ -15,7 +15,7 @@
 // are mounted in slices of a frame budget, nearest first, so mounting books
 // never blocks a frame of a pan.
 
-import { aspectOf, isSquare, lean, scaleOf, thickness, type Book, type Shelfed } from "./data.js";
+import { aspectOf, lean, thickness, type Book, type Shelfed } from "./data.js";
 import { bookBox } from "./book.js";
 import { h } from "./dom.js";
 import type { Labels } from "./labels.js";
@@ -33,8 +33,6 @@ const metricsFor = (vw: number): Metrics => {
 type Range = { i0: number; i1: number; j0: number; j1: number };
 const covers = (r: Range | null, n: Range) => !!r && r.i0 <= n.i0 && r.i1 >= n.i1 && r.j0 <= n.j0 && r.j1 >= n.j1;
 const OVERSCAN = 1;
-/** On this shelf books take their real size; elsewhere every book is the same 2:3 box. */
-const TRIAL_ROW = 0;
 /** Frame budget for mounting cells, in ms. */
 const BUDGET = 6;
 /** A pointer held this long (ms) before release has stopped: no coast. */
@@ -487,14 +485,12 @@ export class Wall {
     const k = this.indexAt(i, j);
     const b = this.d.books[k]!;
     const key = `${i}:${j}`;
-    const vars: Record<string, string | number> = { "--lean": `${lean(b)}deg`, "--t": thickness(b) };
-    // Square art (Audible Originals) is a square box on every shelf.
-    if (isSquare(this.d, b)) vars["--ar"] = 1;
-    // Modulo n: after a vertical recentre, row n is the same shelf as row 0.
-    if (mod(j, this.n) === TRIAL_ROW) {
-      vars["--w"] = `${(m.bw * scaleOf(b)).toFixed(1)}px`;
-      vars["--ar"] = aspectOf(this.d, b);
-    }
+    // Every book is the same width; its cover's proportions set the height.
+    const vars: Record<string, string | number> = {
+      "--lean": `${lean(b)}deg`,
+      "--t": thickness(b),
+      "--ar": aspectOf(this.d, b),
+    };
     const overlay = h(
       "span.bw-overlay",
       null,
